@@ -258,43 +258,60 @@
     let user = null;
 
     function initTelegramWebApp() {
-      if (window.Telegram && window.Telegram.WebApp) {
-        tg = window.Telegram.WebApp;
-        
-        // Expand to full height
-        tg.expand();
-        tg.ready();
-        
-        // Apply theme
-        if (tg.colorScheme === 'dark') {
-          document.body.style.backgroundColor = '#0f172a';
+      // Try multiple times in case Telegram injects the object late
+      let attempts = 0;
+      const tryInit = () => {
+        if (window.Telegram && window.Telegram.WebApp) {
+          tg = window.Telegram.WebApp;
+          tg.expand();
+          tg.ready();
+
+          if (tg.colorScheme === 'dark') {
+            document.body.style.backgroundColor = '#0f172a';
+          }
+
+          if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            user = tg.initDataUnsafe.user;
+            renderUser(user);
+          } else {
+            renderUser({ first_name: "Friend", username: "demo", id: 0 });
+          }
+
+          tg.enableClosingConfirmation();
+          return true;
         }
-        
-        // Get user
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-          user = tg.initDataUnsafe.user;
-          renderUser(user);
-        } else {
-          // Fallback for testing
-          renderUser({ first_name: "Friend", username: "demo", id: 0 });
+        return false;
+      };
+
+      if (tryInit()) return;
+
+      const interval = setInterval(() => {
+        attempts++;
+        if (tryInit() || attempts > 8) {
+          clearInterval(interval);
+          if (!tg) showNotInTelegramWarning();
         }
-        
-        // Enable closing confirmation if needed
-        tg.enableClosingConfirmation();
-      } else {
-        // Not inside Telegram — demo mode
-        document.getElementById('user-greeting').innerHTML = `
-          <div class="flex items-center gap-3 opacity-75">
-            <div class="w-11 h-11 bg-slate-800 rounded-2xl flex items-center justify-center">
-              <i class="fa-solid fa-robot text-2xl text-indigo-400"></i>
-            </div>
+      }, 180);
+    }
+
+    function showNotInTelegramWarning() {
+      const greeting = document.getElementById('user-greeting');
+      greeting.innerHTML = `
+        <div class="flex flex-col gap-2 bg-amber-900/30 border border-amber-500/40 rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle text-amber-400 text-xl"></i>
             <div>
-              <div class="font-semibold">Demo Mode</div>
-              <div class="text-[10px] text-amber-400">Open this inside Telegram for full features</div>
+              <div class="font-semibold text-amber-300">Not opened from Telegram</div>
+              <div class="text-xs text-amber-200 mt-0.5">This Mini App must be launched from the bot.</div>
             </div>
           </div>
-        `;
-      }
+          <div class="text-xs text-slate-300 pl-7">
+            1. Open <b>@AmazingToolsBot</b> (or your bot)<br>
+            2. Tap <b>/start</b><br>
+            3. Tap the big <b>✨ Open Beautiful Mini App</b> button
+          </div>
+        </div>
+      `;
     }
     
     function renderUser(u) {
@@ -309,7 +326,24 @@
         avatar.src = `https://api.dicebear.com/7.x/thumbs/svg?seed=${u.id || u.username || 'user'}`;
       }
     }
-    
+
+    function showSentFeedback(message) {
+      // Create or update a nice toast/status banner
+      let banner = document.getElementById('sent-feedback');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'sent-feedback';
+        banner.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 max-w-[90%] bg-emerald-600 text-white text-sm px-5 py-3 rounded-3xl shadow-xl flex items-center gap-2 z-[999]';
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = `<i class="fa-solid fa-check-circle"></i> <span>${message}</span>`;
+      
+      // Auto hide after some time if not closed by user
+      setTimeout(() => {
+        if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+      }, 4500);
+    }
+
     function closeApp() {
       if (tg) {
         tg.close();
@@ -336,56 +370,54 @@
         url: url
       };
       
-      if (tg) {
-        tg.sendData(JSON.stringify(payload));
-        tg.showAlert("✅ Download request sent!\nThe bot will reply in this chat.");
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
         
-        // Clear input
+        // Better UX: show status in the page instead of just alert
+        showSentFeedback("📥 Download request sent to the bot!<br>Check your Telegram chat now.");
+        
         input.value = '';
         
-        // Close mini app shortly after
         setTimeout(() => {
-          tg.close();
-        }, 1200);
+          if (webApp.close) webApp.close();
+        }, 1400);
       } else {
-        alert("In real Telegram Mini App this would send:\n" + JSON.stringify(payload, null, 2));
+        showSentFeedback("✅ Would have sent to bot:<br>" + JSON.stringify(payload));
       }
     }
     
     function requestStickerFlow() {
       const payload = { action: "sticker" };
       
-      if (tg) {
-        tg.sendData(JSON.stringify(payload));
-        tg.showAlert("Open your chat — send any photo to the bot to create stickers.");
-        setTimeout(() => tg.close(), 1500);
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
+        showSentFeedback("🎨 Sticker request sent!<br>Now send a photo in the bot chat.");
+        setTimeout(() => webApp.close && webApp.close(), 1600);
       } else {
-        alert("Demo: Would send sticker request to bot.");
+        showSentFeedback("🎨 Would send sticker request.");
       }
     }
     
     function quickAction(type) {
       let payload = { action: type };
       
-      if (tg) {
-        tg.sendData(JSON.stringify(payload));
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
         
         if (type === 'balance') {
-          tg.showAlert("Balance request sent to bot. Check your chat!");
+          showSentFeedback("📊 Balance request sent to bot.<br>Check your chat!");
+          setTimeout(() => webApp.close && webApp.close(), 1100);
         } else if (type === 'tools') {
-          tg.showAlert("Check the tools list in chat.");
+          showSentFeedback("🛠️ Tools list sent to chat.");
+          setTimeout(() => webApp.close && webApp.close(), 900);
         } else if (type === 'contact') {
-          tg.showAlert("Opening contact info...");
-          setTimeout(() => {
-            window.open('https://t.me/roki1277', '_blank');
-          }, 600);
-        }
-        
-        if (type !== 'contact') {
-          setTimeout(() => tg.close(), 900);
+          window.open('https://t.me/roki1277', '_blank');
         }
       } else {
-        alert(`Demo: Sent action "${type}" to the bot.`);
+        showSentFeedback(`Sent action: ${type}`);
       }
     }
     
@@ -407,14 +439,6 @@
       initTelegramWebApp();
       setupKeyboard();
       
-      // Optional: Prefill a sample link for demo
-      const urlField = document.getElementById('video-url');
-      if (urlField && !window.Telegram) {
-        // Only in demo
-        // urlField.value = "https://www.youtube.com/watch?v=dQw4w9wgxcq";
-      }
-      
-      // Nice little hint
       console.log('%c[Amazing Tools] Mini App ready', 'color:#64748b');
     }
     
