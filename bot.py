@@ -326,11 +326,8 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def contact_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "<b>📞 Contact Information</b>\n\n"
-        "👤 <b>Creator:</b> Rakib Sojib
-"
-        "📱 <b>Telegram:</b> @roki1277
-
-"
+        "👤 <b>Creator:</b> Rakib Sojib\n"
+        "📱 <b>Telegram:</b> @roki1277\n\n"
         "For support, feature requests, or inquiries, "
         "feel free to reach out via Telegram!\n\n"
         "━━━━━━━━━━━━━━━━\n"
@@ -626,7 +623,7 @@ async def perform_download(
         """Run yt-dlp synchronously in executor. Prioritizes BEST QUALITY available."""
         import yt_dlp
 
-        out_tmpl = str(DOWNLOADS_DIR / "% (id)s.%(ext)s")
+        out_tmpl = str(DOWNLOADS_DIR / "%(id)s.%(ext)s")
         ydl_opts = {
             "outtmpl": out_tmpl,
             "quiet": True,
@@ -929,12 +926,12 @@ def main() -> None:
     app.add_handler(CommandHandler("tools", tools_cmd))
     app.add_handler(CommandHandler("contact", contact_cmd))
     app.add_handler(CommandHandler("balance", balance_cmd))
+    app.add_handler(CommandHandler("menu", menu_cmd))
     app.add_handler(CommandHandler("download", download_cmd))
     app.add_handler(CommandHandler("sticker", sticker_cmd))
     app.add_handler(CommandHandler("dailyfree", admin_dailyfree, filters.User(user_id=OWNER_ID)))
     app.add_handler(CommandHandler("whitelist", admin_whitelist, filters.User(user_id=OWNER_ID)))
     app.add_handler(CommandHandler("addfree", admin_addfree, filters.User(user_id=OWNER_ID)))
-    app.add_handler(CommandHandler("menu", menu_cmd))
 
     # Pre-checkout (answer payment query) & successful payment (handle after payment)
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_callback))
