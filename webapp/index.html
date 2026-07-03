@@ -1,1 +1,502 @@
-The full current webapp/index.html with URL shortener UI and fixes
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Amazing Tools • Mini App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --tg-theme-bg-color: #0f172a;
+      --tg-theme-text-color: #f1f5f9;
+    }
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .font-display {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+    }
+
+    .glass {
+      background: rgba(255,255,255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255, 0.08);
+    }
+
+    .section-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .tg-button {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      transition: all 0.2s ease;
+    }
+    
+    .tg-button:active {
+      transform: scale(0.985);
+    }
+
+    .tool-icon {
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+    }
+
+    .mini-header {
+      background: linear-gradient(90deg, #0f172a, #1e2937);
+    }
+
+    .stat-pill {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .telegram-blue {
+      color: #229ED9;
+    }
+
+    .nav-active {
+      background: rgba(99, 102, 241, 0.15);
+      color: #6366f1;
+      font-weight: 600;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen pb-8">
+  <!-- Header -->
+  <div class="mini-header sticky top-0 z-50 px-5 pt-4 pb-4 border-b border-white/10">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-inner">
+          <i class="fa-solid fa-magic text-white text-2xl"></i>
+        </div>
+        <div>
+          <div class="font-display text-2xl font-semibold tracking-tighter">Amazing Tools</div>
+          <div class="text-[10px] text-slate-400 -mt-1">by Rakib Sojib</div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-x-2">
+        <div onclick="closeApp()" 
+             class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white active:bg-white/10 rounded-2xl transition-colors">
+          <i class="fa-solid fa-times text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-md mx-auto px-5 pt-6">
+    
+    <!-- User greeting -->
+    <div class="mb-6">
+      <div id="user-greeting" class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-slate-800 rounded-2xl overflow-hidden border border-white/10">
+          <img id="user-avatar" class="w-full h-full object-cover" src="https://api.dicebear.com/7.x/thumbs/svg?seed=amazing" alt="">
+        </div>
+        <div>
+          <div id="greeting-text" class="text-lg font-semibold">Hi there!</div>
+          <div class="text-xs text-emerald-400 flex items-center gap-1">
+            <i class="fa-solid fa-circle text-[8px]"></i> 
+            <span>Online • Ready to help</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-3 gap-3 mb-7">
+      <div class="glass rounded-3xl px-3 py-3 text-center">
+        <div class="text-xs text-slate-400">Free uses</div>
+        <div id="free-stat" class="font-display text-3xl font-semibold text-emerald-400">5</div>
+        <div class="text-[10px] text-slate-400">per day</div>
+      </div>
+      <div class="glass rounded-3xl px-3 py-3 text-center">
+        <div class="text-xs text-slate-400">Video</div>
+        <div class="font-display text-3xl font-semibold text-sky-400">5★</div>
+        <div class="text-[10px] text-slate-400">per download</div>
+      </div>
+      <div class="glass rounded-3xl px-3 py-3 text-center">
+        <div class="text-xs text-slate-400">Sticker</div>
+        <div class="font-display text-3xl font-semibold text-violet-400">10★</div>
+        <div class="text-[10px] text-slate-400">per pack</div>
+      </div>
+    </div>
+
+    <!-- VIDEO DOWNLOADER -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-sky-500/10">
+          <i class="fa-solid fa-download text-3xl text-sky-400"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-xl tracking-tight">Video Downloader</div>
+          <div class="text-xs text-slate-400">TikTok, YouTube, IG, FB, X &amp; more</div>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-slate-400 mb-1.5 pl-1">VIDEO URL</label>
+        <input id="video-url" 
+               type="text" 
+               placeholder="https://tiktok.com/@user/video/..." 
+               class="w-full bg-slate-900 border border-white/10 focus:border-sky-500 placeholder:text-slate-500 text-sm px-4 py-3.5 rounded-2xl outline-none transition-all">
+      </div>
+      
+      <button onclick="requestVideoDownload()"
+              class="tg-button w-full py-3.5 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-950 active:scale-[0.985]">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Send Download Request to Bot</span>
+      </button>
+      
+      <div class="text-center mt-2">
+        <span class="text-[10px] px-2 py-0.5 bg-white/5 rounded-full text-slate-400">Bot will download &amp; send here</span>
+      </div>
+    </div>
+
+    <!-- URL SHORTENER -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-emerald-500/10">
+          <i class="fa-solid fa-link text-3xl text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-xl tracking-tight">URL Shortener</div>
+          <div class="text-xs text-slate-400">Free • Custom codes • Click tracking</div>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-slate-400 mb-1.5 pl-1">LONG URL</label>
+        <input id="long-url" 
+               type="text" 
+               placeholder="https://very-long-link.com/page/123" 
+               class="w-full bg-slate-900 border border-white/10 focus:border-emerald-500 placeholder:text-slate-500 text-sm px-4 py-3.5 rounded-2xl outline-none transition-all">
+      </div>
+      
+      <button onclick="shortenUrl()"
+              class="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.985] transition">
+        <i class="fa-solid fa-compress-arrows-alt"></i>
+        <span>Create Short Link</span>
+      </button>
+      
+      <div class="text-center mt-2">
+        <span class="text-[10px] text-slate-400">Short link: your-bot.onrender.com/s/xxxx</span>
+      </div>
+    </div>
+
+    <!-- STICKER CREATOR -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-violet-500/10">
+          <i class="fa-solid fa-images text-3xl text-violet-400"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-xl tracking-tight">Sticker Pack Creator</div>
+          <div class="text-xs text-slate-400">Turn photos into beautiful stickers</div>
+        </div>
+      </div>
+      
+      <div class="bg-slate-900/60 rounded-2xl p-4 mb-4 text-sm">
+        <div class="flex gap-3 items-start">
+          <i class="fa-solid fa-info-circle mt-0.5 text-violet-400"></i>
+          <div class="text-slate-300 text-sm leading-snug">
+            Send any photo directly to the bot in chat.<br>
+            It will convert to a ready-to-use sticker pack.
+          </div>
+        </div>
+      </div>
+      
+      <button onclick="requestStickerFlow()"
+              class="w-full border border-white/20 hover:bg-white/5 active:bg-white/10 transition-colors py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
+        <i class="fa-solid fa-camera"></i>
+        <span>Start Sticker Flow in Chat</span>
+      </button>
+    </div>
+
+    <!-- Other quick tools -->
+    <div class="mb-2 px-1 flex items-center justify-between">
+      <div class="text-xs uppercase tracking-widest text-slate-400 font-medium">More Tools</div>
+    </div>
+
+    <div class="feature-grid mb-6">
+      <div onclick="quickAction('balance')" 
+           class="glass px-4 py-4 rounded-3xl cursor-pointer active:scale-95 transition flex items-center gap-3">
+        <i class="fa-solid fa-wallet w-5 text-emerald-400"></i>
+        <div>
+          <div class="font-medium text-sm">Check Balance</div>
+          <div class="text-[10px] text-slate-400">Free uses &amp; limits</div>
+        </div>
+      </div>
+      
+      <div onclick="quickAction('tools')" 
+           class="glass px-4 py-4 rounded-3xl cursor-pointer active:scale-95 transition flex items-center gap-3">
+        <i class="fa-solid fa-toolbox w-5 text-amber-400"></i>
+        <div>
+          <div class="font-medium text-sm">All Tools</div>
+          <div class="text-[10px] text-slate-400">What can I do?</div>
+        </div>
+      </div>
+      
+      <div onclick="quickAction('contact')" 
+           class="glass px-4 py-4 rounded-3xl cursor-pointer active:scale-95 transition flex items-center gap-3">
+        <i class="fa-solid fa-headset w-5 text-pink-400"></i>
+        <div>
+          <div class="font-medium text-sm">Contact Creator</div>
+          <div class="text-[10px] text-slate-400">@roki1277</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info banner -->
+    <div class="px-4 py-3 bg-slate-900 rounded-3xl text-xs flex gap-2 items-center border border-white/5 mb-8">
+      <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+      <span class="text-slate-300">All downloads use <span class="font-semibold">Telegram Stars</span> for secure payments.</span>
+    </div>
+    
+    <div class="text-center">
+      <div class="text-xs text-slate-500">Made with ❤️ by Rakib Sojib</div>
+      <div onclick="window.open('https://t.me/roki1277', '_blank')" class="inline-block mt-1 text-indigo-400 text-xs cursor-pointer hover:underline">@roki1277</div>
+    </div>
+  </div>
+
+  <script>
+    // Tailwind script
+    function initTailwind() {
+      document.documentElement.style.setProperty('--tg-theme-bg-color', '#0f172a');
+    }
+    
+    let tg = null;
+    let user = null;
+
+    function initTelegramWebApp() {
+      // Try multiple times in case Telegram injects the object late
+      let attempts = 0;
+      const tryInit = () => {
+        if (window.Telegram && window.Telegram.WebApp) {
+          tg = window.Telegram.WebApp;
+          tg.expand();
+          tg.ready();
+
+          if (tg.colorScheme === 'dark') {
+            document.body.style.backgroundColor = '#0f172a';
+          }
+
+          if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            user = tg.initDataUnsafe.user;
+            renderUser(user);
+          } else {
+            renderUser({ first_name: "Friend", username: "demo", id: 0 });
+          }
+
+          tg.enableClosingConfirmation();
+          return true;
+        }
+        return false;
+      };
+
+      if (tryInit()) return;
+
+      const interval = setInterval(() => {
+        attempts++;
+        if (tryInit() || attempts > 8) {
+          clearInterval(interval);
+          if (!tg) showNotInTelegramWarning();
+        }
+      }, 180);
+    }
+
+    function showNotInTelegramWarning() {
+      const greeting = document.getElementById('user-greeting');
+      greeting.innerHTML = `
+        <div class="flex flex-col gap-2 bg-amber-900/30 border border-amber-500/40 rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle text-amber-400 text-xl"></i>
+            <div>
+              <div class="font-semibold text-amber-300">Not opened from Telegram</div>
+              <div class="text-xs text-amber-200 mt-0.5">This Mini App must be launched from the bot.</div>
+            </div>
+          </div>
+          <div class="text-xs text-slate-300 pl-7">
+            1. Open <b>@AmazingToolsBot</b> (or your bot)<br>
+            2. Tap <b>/start</b><br>
+            3. Tap the big <b>✨ Open Beautiful Mini App</b> button
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderUser(u) {
+      const greeting = document.getElementById('greeting-text');
+      greeting.textContent = `Hi, ${u.first_name || 'there'}!`;
+      
+      const avatar = document.getElementById('user-avatar');
+      if (u.photo_url) {
+        avatar.src = u.photo_url;
+      } else {
+        // Use nice default
+        avatar.src = `https://api.dicebear.com/7.x/thumbs/svg?seed=${u.id || u.username || 'user'}`;
+      }
+    }
+
+    function showSentFeedback(message) {
+      let banner = document.getElementById('sent-feedback');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'sent-feedback';
+        banner.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 max-w-[90%] bg-emerald-600 text-white text-sm px-5 py-3 rounded-3xl shadow-xl flex items-center gap-2 z-[999]';
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = `<i class="fa-solid fa-check-circle"></i> <span>${message}</span>`;
+      setTimeout(() => {
+        if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+      }, 4500);
+    }
+
+    function closeApp() {
+      if (tg) {
+        tg.close();
+      } else {
+        window.close();
+      }
+    }
+    
+    function requestVideoDownload() {
+      const input = document.getElementById('video-url');
+      const url = input.value.trim();
+      
+      if (!url) {
+        if (tg) {
+          tg.showAlert("Please enter a valid video URL");
+        } else {
+          alert("Please enter a valid video URL");
+        }
+        return;
+      }
+      
+      const payload = {
+        action: "download",
+        url: url
+      };
+      
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
+        showSentFeedback("📥 Download request sent to the bot!<br>Check your Telegram chat now.");
+        input.value = '';
+        setTimeout(() => {
+          if (webApp.close) webApp.close();
+        }, 1400);
+      } else {
+        showSentFeedback("✅ Would have sent to bot:<br>" + JSON.stringify(payload));
+      }
+    }
+    
+    function requestStickerFlow() {
+      const payload = { action: "sticker" };
+      
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
+        showSentFeedback("🎨 Sticker request sent!<br>Now send a photo in the bot chat.");
+        setTimeout(() => webApp.close && webApp.close(), 1600);
+      } else {
+        showSentFeedback("🎨 Would send sticker request.");
+      }
+    }
+
+    function shortenUrl() {
+      const input = document.getElementById('long-url');
+      const url = input.value.trim();
+      
+      if (!url) {
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.showAlert("Please enter a URL to shorten");
+        } else {
+          alert("Please enter a URL");
+        }
+        return;
+      }
+      
+      const payload = {
+        action: "shorten",
+        url: url
+      };
+      
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
+        showSentFeedback("🔗 Short link request sent to bot!<br>Check your chat.");
+        input.value = '';
+        setTimeout(() => {
+          if (webApp.close) webApp.close();
+        }, 1400);
+      } else {
+        showSentFeedback("✅ Would shorten: " + url);
+      }
+    }
+    
+    function quickAction(type) {
+      let payload = { action: type };
+      
+      const webApp = window.Telegram && window.Telegram.WebApp;
+      if (webApp) {
+        webApp.sendData(JSON.stringify(payload));
+        
+        if (type === 'balance') {
+          showSentFeedback("📊 Balance request sent to bot.<br>Check your chat!");
+          setTimeout(() => webApp.close && webApp.close(), 1100);
+        } else if (type === 'tools') {
+          showSentFeedback("🛠️ Tools list sent to chat.");
+          setTimeout(() => webApp.close && webApp.close(), 900);
+        } else if (type === 'contact') {
+          window.open('https://t.me/roki1277', '_blank');
+        }
+      } else {
+        showSentFeedback(`Sent action: ${type}`);
+      }
+    }
+    
+    function setupKeyboard() {
+      const urlInput = document.getElementById('video-url');
+      if (urlInput) {
+        urlInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            requestVideoDownload();
+          }
+        });
+      }
+    }
+    
+    function boot() {
+      initTailwind();
+      initTelegramWebApp();
+      setupKeyboard();
+      console.log('%c[Amazing Tools] Mini App ready', 'color:#64748b');
+    }
+    
+    window.onload = boot;
+    
+    window.AmazingTools = { requestVideoDownload, requestStickerFlow, shortenUrl, quickAction };
+  </script>
+</body>
+</html>
