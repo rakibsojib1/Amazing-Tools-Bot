@@ -16,10 +16,13 @@ import urllib.request
 
 from PIL import Image
 from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     InputSticker,
     LabeledPrice,
     Message,
     Update,
+    WebAppInfo,
 )
 from telegram.constants import ParseMode
 from telegram.ext import (
@@ -30,6 +33,11 @@ from telegram.ext import (
     PreCheckoutQueryHandler,
     filters,
 )
+
+# Mini App web server (no extra deps)
+import threading
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+from functools import partial
 
 # ---------------------------------------------------------------------------
 # Config
@@ -48,14 +56,20 @@ DAILY_FREE_DEFAULT_LIMIT = 5
 PRICE_DOWNLOAD = 5    # Stars per video download
 PRICE_STICKER = 10    # Stars per sticker pack creation
 
-# ── Logging ──────────────────────────────────────────────────────────────
+# Mini App public URL (set this in Render env for the "Open Mini App" button to work)
+# Example: https://amazing-tools-bot.onrender.com
+MINIAPP_URL = os.environ.get("MINIAPP_URL", "").rstrip("/")
+if not MINIAPP_URL:
+    MINIAPP_URL = None  # Will show helpful message in /start
+
+# ── Logging ───────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
-# ── Helpers ──────────────────────────────────────────────────────────────
+# ── Helpers ─────────────────────────────────
 
 def get_usage_db() -> sqlite3.Connection:
     """Return a thread-safe(ish) SQLite connection (one per coroutine)."""
@@ -148,7 +162,7 @@ def deduct_whitelist_use(user_id: int) -> None:
             save_whitelist(wl)
 
 
-# ── Check if user can use a tool for free ────────────────────────────────
+# ── Check if user can use a tool for free ─────────────────
 
 async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str]:
     """Returns (allowed, reason_if_denied)."""
@@ -170,7 +184,7 @@ async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str
     return False, "Free usage not available. Pay via in-chat payment."
 
 
-# ── Payment helpers (Telegram Stars) ─────────────────────────────────────
+# ── Payment helpers (Telegram Stars) ────────────────
 
 async def send_star_invoice(
     update: Update, context: ContextTypes.DEFAULT_TYPE, title: str, description: str, price: int, payload: str
@@ -193,7 +207,7 @@ async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer(ok=True)
 
 
-# ── Commands ─────────────────────────────────────────────────────────────
+# ── Commands ──────────────────────
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -205,14 +219,36 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Send me a <b>video link</b> → I'll download it (requires payment)\n"
         "• Send me a <b>photo</b> → I'll turn it into stickers\n"
         "• Use /tools to see everything I can do\n\n"
-        "👇 <i>Try sending a link or photo right now!</i>\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
-        "📞 Contact: <b>@roki1277</b>\n"
+        "💌 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━"
     )
-    await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
+
+    # Beautiful Mini App launch button (only when configured)
+    reply_markup = None
+    if MINIAPP_URL:
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton(
+                "✨ Open Beautiful Mini App",
+                web_app=WebAppInfo(url=MINIAPP_URL)
+            )]
+        ])
+    else:
+        # Helpful message when not set yet
+        await update.message.reply_text(
+            "💡 <b>Mini App available!</b>\n"
+            "Set the <code>MINIAPP_URL</code> env var on Render to your public URL "
+            "(https://your-service.onrender.com) then restart to enable the beautiful UI button.",
+            parse_mode=ParseMode.HTML,
+        )
+
+    await update.message.reply_text(
+        msg,
+        parse_mode=ParseMode.HTML,
+        reply_markup=reply_markup
+    )
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -229,11 +265,11 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Just send any video link from TikTok/YouTube/Instagram\n"
         "• Just send any photo to turn it into stickers\n"
         "• The bot auto-detects what you send!\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
-        "📞 Contact: <b>@roki1277</b>\n"
+        "💌 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
@@ -241,7 +277,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "<b>🔧 Available Tools</b>\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━\n\n"
         "📥 <b>Video Downloader</b>\n"
         "Download videos from:\n"
         "• TikTok (no watermark)\n"
@@ -251,18 +287,18 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Twitter / X\n"
         "• And many more!\n"
         "💰 <b>Cost:</b> ⭐ 5 Stars per download\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━\n\n"
         "🎨 <b>Sticker Creator</b>\n"
         "Turn your photos into Telegram sticker packs!\n"
         "• Auto-resize & optimize\n"
         "• Create custom sticker sets\n"
         "💰 <b>Cost:</b> ⭐ 10 Stars per pack\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━\n\n"
         "<b>💳 Payment:</b> Pay with Telegram Stars (XTR)\n"
         "• Just click the payment button when prompted\n\n"
         "━━━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
-        "📞 Contact: <b>@roki1277</b>\n"
+        "💌 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
         "━━━━━━━━━━━━━━━━"
     )
@@ -271,14 +307,14 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def contact_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
-        "<b>📞 Contact Information</b>\n\n"
+        "<b>💌 Contact Information</b>\n\n"
         "👤 <b>Creator:</b> Rakib Sojib\n"
         "📱 <b>Telegram:</b> @roki1277\n\n"
         "For support, feature requests, or inquiries, "
         "feel free to reach out via Telegram!\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
@@ -309,7 +345,7 @@ async def balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     else:
         lines.append("\n💳 Paid-only mode — use in-chat payments.")
 
-    lines.append("\n━━━━━━━━━━━━━━━━\n👤 Created by <b>Rakib Sojib</b>\n📞 Contact: <b>@roki1277</b>\n🤖 Made with AI\n━━━━━━━━━━━━━━━━")
+    lines.append("\n━━━━━━━━━━━━━━\n👤 Created by <b>Rakib Sojib</b>\n💌 Contact: <b>@roki1277</b>\n🤖 Made with AI\n━━━━━━━━━━━━━━")
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
 
 
@@ -335,7 +371,7 @@ async def sticker_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     )
 
 
-# ── Admin commands ───────────────────────────────────────────────────────
+# ── Admin commands ───────────────────
 
 async def admin_dailyfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user.id != OWNER_ID:
@@ -461,7 +497,7 @@ async def admin_addfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text("❌ Invalid ID or count.")
 
 
-# ── Message / auto-detect handler ────────────────────────────────────────
+# ── Message / auto-detect handler ───────────────
 
 VIDEO_LINK_PATTERN = re.compile(
     r"(https?://)?(www\.)?(tiktok|youtube|youtu\.be|instagram|facebook|fb|x|twitter|"
@@ -479,19 +515,19 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not msg:
         return
 
-    # ── Photo → sticker flow ──────────────────────────────────────────
+    # ── Photo → sticker flow ────────
     if msg.photo:
         await handle_photo_for_sticker(update, context, msg)
         return
 
-    # ── Video link → download flow ────────────────────────────────────
+    # ── Video link → download flow ────────
     if msg.text and VIDEO_LINK_PATTERN.search(msg.text):
         url = VIDEO_LINK_PATTERN.search(msg.text).group(0)
         await handle_video_link(update, context, url)
         return
 
 
-# ── Video download logic ─────────────────────────────────────────────────
+# ── Video download logic ────────────────
 
 async def handle_video_link(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str) -> None:
     user = update.effective_user
@@ -569,7 +605,7 @@ async def perform_download(
         Path(filepath).unlink(missing_ok=True)
 
 
-# ── Sticker creation logic ───────────────────────────────────────────────
+# ── Sticker creation logic ───────────────
 
 async def handle_photo_for_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: Message) -> None:
     user = update.effective_user
@@ -661,7 +697,7 @@ async def perform_sticker_creation(
         Path(sticker_path).unlink(missing_ok=True)
 
 
-# ── Successful payment handler ───────────────────────────────────────────
+# ── Successful payment handler ───────────────
 
 async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle a successful Telegram Stars payment (Message with successful_payment)."""
@@ -686,9 +722,78 @@ async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
 
 
-# ── Main ─────────────────────────────────────────────────────────────────
+# ── Telegram Mini App (WebApp) data handler ─────────────
+
+async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle data sent from the beautiful Mini App."""
+    try:
+        raw = update.effective_message.web_app_data.data
+        payload = json.loads(raw) if raw else {}
+    except Exception:
+        payload = {}
+        logger.warning("Invalid web_app_data received")
+
+    action = (payload.get("action") or "").lower()
+    user = update.effective_user
+
+    if action == "download":
+        url = payload.get("url", "").strip()
+        if url:
+            await handle_video_link(update, context, url)
+        else:
+            await update.effective_message.reply_text("❌ No URL received from Mini App.")
+    elif action == "sticker":
+        await update.effective_message.reply_text(
+            "🎨 Send me the photo now (or use /sticker) and I'll turn it into a sticker pack!"
+        )
+    elif action == "balance":
+        # Reuse the balance command logic
+        await balance_cmd(update, context)
+    elif action == "tools":
+        await tools_cmd(update, context)
+    else:
+        await update.effective_message.reply_text(
+            "👋 Thanks for using the Mini App!\nUse /tools or just send a link/photo."
+        )
+
+
+# ── Mini App static file server (background thread) ───────────
+
+def run_miniapp_server(host: str = "0.0.0.0", port: int = 8080) -> None:
+    """Serve the beautiful Mini App UI on a simple HTTP server."""
+    webapp_dir = Path(__file__).parent / "webapp"
+    if not webapp_dir.exists():
+        logger.warning("webapp/ directory not found — Mini App UI will not be served.")
+        return
+
+    handler = partial(SimpleHTTPRequestHandler, directory=str(webapp_dir))
+
+    httpd = HTTPServer((host, port), handler)
+    logger.info(f"Mini App UI serving on http://{host}:{port} (from {webapp_dir})")
+    try:
+        httpd.serve_forever()
+    except Exception as e:
+        logger.error(f"Mini App server error: {e}")
+
+
+def start_miniapp_server_background() -> None:
+    """Start the UI server in a daemon thread so polling can run in main thread."""
+    port = int(os.environ.get("PORT", "8080"))
+    thread = threading.Thread(
+        target=run_miniapp_server,
+        kwargs={"host": "0.0.0.0", "port": port},
+        daemon=True,
+    )
+    thread.start()
+    logger.info(f"Started Mini App static server thread on port {port}")
+
+
+# ── Main ──────────
 
 def main() -> None:
+    # Start the beautiful Mini App UI server in background (Render exposes $PORT)
+    start_miniapp_server_background()
+
     app = Application.builder().token(BOT_TOKEN).build()
 
     # Commands
@@ -709,6 +814,9 @@ def main() -> None:
 
     # Auto-detect handler for video links & photos
     app.add_handler(MessageHandler(filters.TEXT | filters.PHOTO, auto_detect))
+
+    # Handle data coming from the Telegram Mini App
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
 
     logger.info("Amazing Tools Bot starting...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)

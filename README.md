@@ -21,8 +21,8 @@ A feature-rich **Telegram bot** for downloading videos (TikTok, YouTube, Instagr
 ### 1. Fork / Clone
 
 ```bash
-git clone https://github.com/rakibsojib1/Amazing-Tools.git
-cd Amazing-Tools
+git clone https://github.com/rakibsojib1/Amazing-Tools-Bot.git
+cd Amazing-Tools-Bot
 ```
 
 ### 2. Create a Bot on Telegram
@@ -36,7 +36,7 @@ cd Amazing-Tools
 ### 3. Deploy on Render
 
 1. Go to [dashboard.render.com](https://dashboard.render.com) → **New** → **Web Service**
-2. Connect your GitHub repo (`rakibsojib1/Amazing-Tools`)
+2. Connect your GitHub repo (`rakibsojib1/Amazing-Tools-Bot`)
 3. Configure:
 
    | Setting | Value |
@@ -47,11 +47,12 @@ cd Amazing-Tools
    | **Start Command** | `python bot.py` |
    | **Plan** | Free (or paid for better uptime) |
 
-4. Add **Environment Variable**:
+4. Add **Environment Variables**:
 
    | Key | Value |
    |---|---|
    | `BOT_TOKEN` | Your bot token from BotFather |
+   | `MINIAPP_URL` | `https://your-service-name.onrender.com` (after first deploy) — enables beautiful Mini App UI |
 
 5. Click **Deploy**
 
@@ -110,7 +111,7 @@ python bot.py
 Just send any message and the bot figures it out:
 
 - 📤 **Send a video link** (TikTok, YouTube, etc.) → starts download flow
-- 🖼️ **Send a photo** → starts sticker creation flow
+- 🐿️ **Send a photo** → starts sticker creation flow
 
 ---
 
@@ -120,6 +121,24 @@ Just send any message and the bot figures it out:
 - **whitelist.json** — stores whitelisted user IDs and their remaining free uses
 
 Both files are created automatically on first run.
+
+## 📱 Telegram Mini App
+
+A beautiful, modern web UI is included (`webapp/index.html`).
+
+- When users tap **"✨ Open Beautiful Mini App"** in `/start`, it opens an in-app browser experience.
+- Supports sending **video download requests** straight from the nice UI.
+- **Check balance**, **stickers**, and other tools send actions to the bot.
+- Uses Tailwind + clean dark Telegram-style design.
+
+### Setup on Render / BotFather
+
+1. After deploying, copy your service URL (e.g. `https://amazing-tools-bot.onrender.com`)
+2. Add `MINIAPP_URL` environment variable in Render with that value.
+3. (Optional) In BotFather:
+   - `/mybots` → your bot → **Bot Settings** → **Menu Button** → **Configure Menu Button** → set to the same URL (or use the in-chat button)
+
+Re-deploy after setting the env var. The button will appear instantly.
 
 ---
 
