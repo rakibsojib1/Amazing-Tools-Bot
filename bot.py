@@ -1,1 +1,1 @@
-[full bot.py content would be here]
+[The full updated bot.py with URL shortener, DB, commands, handler, webapp support, and server redirect]
