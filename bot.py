@@ -619,44 +619,64 @@ async def handle_video_link(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 async def perform_download(
     update: Update, context: ContextTypes.DEFAULT_TYPE, url: str, user_id: int
 ) -> None:
-    msg = await update.message.reply_text("⏳ Downloading your video...")
+    msg = await update.message.reply_text("⏳ Downloading **best quality** available...")
     loop = asyncio.get_event_loop()
 
     def _download() -> str | None:
-        """Run yt-dlp synchronously in executor."""
+        """Run yt-dlp synchronously in executor. Prioritizes BEST QUALITY available."""
         import yt_dlp
 
-        out_tmpl = str(DOWNLOADS_DIR / "%(id)s.%(ext)s")
+        out_tmpl = str(DOWNLOADS_DIR / "% (id)s.%(ext)s")
         ydl_opts = {
             "outtmpl": out_tmpl,
             "quiet": True,
             "no_warnings": True,
-            "max_filesize": 50 * 1024 * 1024,  # 50 MB safety limit
-            "format": "best[filesize<50M]/bestvideo[filesize<50M]+bestaudio/best",
+            # No hard size limit — user wants best quality
+            "format": "bv*+ba/b",                 # Best video + best audio, fallback to best combined
+            "merge_output_format": "mp4",         # Force clean mp4 when merging
             "noplaylist": True,
+            "retries": 5,
+            "fragment_retries": 5,
             "http_headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
             },
             "nocheckcertificate": True,
+            # Help with many adult / restricted / regional sites
+            "age_limit": None,
         }
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 if not info:
                     return None
-                # Locate the downloaded file
-                video_id = info.get('id') or info.get('webpage_url_basename', 'unknown')
+
+                # Best way to locate the final file (works for single + merged)
+                if 'requested_downloads' in info and info['requested_downloads']:
+                    final_path = info['requested_downloads'][0].get('filepath')
+                    if final_path and Path(final_path).exists():
+                        return final_path
+
+                # Fallback: use id + glob
+                video_id = info.get('id') or info.get('webpage_url_basename', 'video')
                 fname = str(DOWNLOADS_DIR / f"{video_id}.{info.get('ext', 'mp4')}")
                 if Path(fname).exists():
                     return fname
-                # yt-dlp may use a different extension; glob for the id
+
                 files = list(DOWNLOADS_DIR.glob(f"{video_id}.*"))
                 if files:
+                    # Pick the largest file (best quality likely)
+                    files.sort(key=lambda p: p.stat().st_size, reverse=True)
                     return str(files[0])
-                # Last resort: pick the newest file
-                all_files = sorted(DOWNLOADS_DIR.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
-                return str(all_files[0]) if all_files else None
+
+                # Last resort: newest biggest file in the folder
+                all_files = [f for f in DOWNLOADS_DIR.glob("*") if f.is_file()]
+                if all_files:
+                    all_files.sort(key=lambda p: p.stat().st_size, reverse=True)
+                    return str(all_files[0])
+                return None
+
         except Exception as exc:
             logger.error(f"yt-dlp error for {url}: {exc}")
             return None
@@ -665,30 +685,44 @@ async def perform_download(
     if not filepath:
         await msg.edit_text(
             "❌ Failed to download video.\n\n"
-            "Possible reasons:\n"
-            "• Site blocks downloaders or requires login\n"
-            "• Video is too large (>50MB)\n"
-            "• Unsupported format or temporary error\n\n"
-            "Try a different link or send it directly in chat."
+            "• The site may block bots or need login\n"
+            "• Video might be private / geo-restricted / live\n"
+            "• yt-dlp couldn't find a downloadable format\n\n"
+            "Try another link (YouTube, TikTok, Instagram Reels usually work best)."
         )
         return
 
-    # Send video to user
+    file_size = Path(filepath).stat().st_size
+    size_mb = file_size / (1024 * 1024)
+    logger.info(f"Downloaded {size_mb:.1f} MB for {url}")
+
+    # Send the video (best quality)
     try:
         with open(filepath, "rb") as f:
-            await update.message.reply_video(
-                video=f,
-                caption="📥 Downloaded via Amazing Tools Bot",
-                write_timeout=60,
-                read_timeout=60,
-            )
+            if size_mb > 45:  # Telegram is picky with video > ~50MB
+                await update.message.reply_document(
+                    document=f,
+                    caption=f"📥 Best quality download ({size_mb:.1f} MB)\nvia Amazing Tools Bot",
+                    write_timeout=120,
+                    read_timeout=120,
+                )
+            else:
+                await update.message.reply_video(
+                    video=f,
+                    caption="📥 Best quality via Amazing Tools Bot",
+                    write_timeout=90,
+                    read_timeout=90,
+                )
         await msg.delete()
         # Deduct usage
         deduct_whitelist_use(user_id)
         increment_usage(user_id, "downloads")
     except Exception as exc:
-        logger.error(f"Send video error: {exc}")
-        await msg.edit_text("✅ Downloaded but couldn't send the file. It may be too large for Telegram.")
+        logger.error(f"Send video/document error ({size_mb:.1f}MB): {exc}")
+        await msg.edit_text(
+            f"✅ Downloaded ({size_mb:.1f} MB) but Telegram couldn't receive it.\n"
+            "It might be too big or in unsupported format."
+        )
     finally:
         # Cleanup
         Path(filepath).unlink(missing_ok=True)
