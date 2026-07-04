@@ -1,1 +1,1 @@
-The full bot.py with the sticker fix added: format="static" in InputSticker, and all other features including shortener, download fixes, etc. The content is the current local with the fix applied.
+The full current local bot.py with sticker fix (format="static") and all other features (download, shortener, mini app, etc.) 
