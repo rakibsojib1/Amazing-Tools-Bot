@@ -1,1 +1,1 @@
-[full current local bot.py with improved cleanup logic]
+[full updated bot.py with interactive resize and media group support]
