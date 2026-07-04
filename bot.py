@@ -17,6 +17,7 @@ from urllib.parse import urlparse, parse_qs
 
 from PIL import Image, ImageFilter
 import qrcode
+import psutil
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -73,6 +74,21 @@ MINIAPP_URL = os.environ.get("MINIAPP_URL", "").rstrip("/")
 if not MINIAPP_URL:
     MINIAPP_URL = None  # Will show helpful message in /start
 
+# Global lock for heavy tasks
+heavy_task_lock = asyncio.Lock()
+
+def get_ram_usage():
+    return psutil.virtual_memory().percent
+
+async def is_server_busy():
+    if heavy_task_lock.locked():
+        return True, "⚠️ I am currently processing another request. Please wait! ⏳"
+    ram = get_ram_usage()
+    if ram > 70:
+        return True, f"⚠️ Server is under heavy load (RAM: {ram}%). Please try later! 🚀"
+    return False, ""
+
+
 # ── Mini App + Main Menu Keyboard ────────────────────────────
 
 def get_main_menu() -> InlineKeyboardMarkup:
@@ -93,7 +109,7 @@ def get_main_menu() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("📱 QR Code", callback_data="cmd_qr"),
-            InlineKeyboardButton("🖼️ Image Tools (Free)", callback_data="cmd_image"),
+            InlineKeyboardButton("🖼️ Image Tools (Free)", callback_data="menu_image"),
         ],
         [
             InlineKeyboardButton("📋 My Shorts", callback_data="cmd_myshorts"),
@@ -102,6 +118,14 @@ def get_main_menu() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("💬 Send a video link or photo directly", callback_data="cmd_help")]
     ])
     return InlineKeyboardMarkup(buttons)
+
+def get_image_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📉 Compress", callback_data="img_hint:compress"), InlineKeyboardButton("🕸️ WebP", callback_data="img_hint:webp")],
+        [InlineKeyboardButton("📐 Resize", callback_data="img_hint:resize"), InlineKeyboardButton("📄 PDF", callback_data="img_hint:pdf")],
+        [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="menu_main")]
+    ])
+
 
 
 # ── Logging ──────────────────────────────────
@@ -125,13 +149,11 @@ def get_usage_db() -> sqlite3.Connection:
             stickers INTEGER DEFAULT 0,
             PRIMARY KEY (user_id, date)
         """)
-    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS config (
             key TEXT PRIMARY KEY,
             value TEXT
         """)
-    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS short_urls (
             short_code TEXT PRIMARY KEY,
@@ -140,7 +162,6 @@ def get_usage_db() -> sqlite3.Connection:
             created_at TEXT,
             clicks INTEGER DEFAULT 0
         """)
-    )
     return db
 
 
@@ -1601,6 +1622,17 @@ def get_video_info_sync(source_url: str) -> dict:
 async def perform_download(
     update: Update, context: ContextTypes.DEFAULT_TYPE, url: str, user_id: int
 ) -> None:
+    busy, msg = await is_server_busy()
+    if busy:
+        # Use effective_message or send directly
+        reply_target = update.message or update.effective_message
+        if reply_target:
+            await reply_target.reply_text(msg)
+        else:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+        return
+    async with heavy_task_lock:
+
     chat_id = update.effective_chat.id
     # Use effective_message or send directly (safer when triggered from Mini App web_app_data)
     reply_target = update.message or update.effective_message
@@ -1784,6 +1816,12 @@ async def handle_photo_for_sticker(update: Update, context: ContextTypes.DEFAULT
 async def perform_sticker_creation(
     update: Update, context: ContextTypes.DEFAULT_TYPE, msg: Message, user_id: int
 ) -> None:
+    busy, msg_busy = await is_server_busy()
+    if busy:
+        await msg.reply_text(msg_busy)
+        return
+    async with heavy_task_lock:
+
     msg_reply = await msg.reply_text("🎨 Creating your sticker pack...")
     user = msg.from_user
 
