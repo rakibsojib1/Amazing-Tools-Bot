@@ -132,12 +132,12 @@
       </div>
       <div class="glass rounded-3xl px-3 py-3 text-center">
         <div class="text-xs text-slate-400">Video</div>
-        <div class="font-display text-3xl font-semibold text-sky-400">5★</div>
+        <div class="font-display text-3xl font-semibold text-sky-400">5⭐</div>
         <div class="text-[10px] text-slate-400">per download</div>
       </div>
       <div class="glass rounded-3xl px-3 py-3 text-center">
         <div class="text-xs text-slate-400">Sticker</div>
-        <div class="font-display text-3xl font-semibold text-violet-400">10★</div>
+        <div class="font-display text-3xl font-semibold text-violet-400">10⭐</div>
         <div class="text-[10px] text-slate-400">per pack</div>
       </div>
     </div>
@@ -359,19 +359,22 @@
     }
 
     function showSentFeedback(message) {
+      // Create or update a nice toast/status banner
       let banner = document.getElementById('sent-feedback');
       if (!banner) {
         banner = document.createElement('div');
         banner.id = 'sent-feedback';
-        banner.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 max-w-[90%] bg-emerald-600 text-white text-sm px-5 py-3 rounded-3xl shadow-xl flex items-center gap-2 z-[999]';
+        banner.className = 'fixed bottom-4 left-1/2 -translate-x/2 max-w-[90%] bg-emerald-600 text-white text-sm px-5 py-3 rounded-3xl shadow-xl flex items-center gap-2 z-[999]';
         document.body.appendChild(banner);
       }
       banner.innerHTML = `<i class="fa-solid fa-check-circle"></i> <span>${message}</span>`;
+      
+      // Auto hide after some time if not closed by user
       setTimeout(() => {
         if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
       }, 4500);
     }
-
+    
     function closeApp() {
       if (tg) {
         tg.close();
@@ -401,8 +404,12 @@
       const webApp = window.Telegram && window.Telegram.WebApp;
       if (webApp) {
         webApp.sendData(JSON.stringify(payload));
+        
+        // Better UX: show status in the page instead of just alert
         showSentFeedback("📥 Download request sent to the bot!<br>Check your Telegram chat now.");
+        
         input.value = '';
+        
         setTimeout(() => {
           if (webApp.close) webApp.close();
         }, 1400);
@@ -476,6 +483,7 @@
       }
     }
     
+    // Keyboard support
     function setupKeyboard() {
       const urlInput = document.getElementById('video-url');
       if (urlInput) {
@@ -487,16 +495,27 @@
       }
     }
     
+    // Boot
     function boot() {
       initTailwind();
       initTelegramWebApp();
       setupKeyboard();
+      
+      // Optional: Prefill a sample link for demo
+      const urlField = document.getElementById('video-url');
+      if (urlField && !window.Telegram) {
+        // Only in demo
+        // urlField.value = "https://www.youtube.com/watch?v=dQw4w9wgxcq";
+      }
+      
+      // Nice little hint
       console.log('%c[Amazing Tools] Mini App ready', 'color:#64748b');
     }
     
     window.onload = boot;
     
-    window.AmazingTools = { requestVideoDownload, requestStickerFlow, shortenUrl, quickAction };
+    // Expose for debugging
+    window.AmazingTools = { requestVideoDownload, requestStickerFlow, quickAction };
   </script>
 </body>
 </html>

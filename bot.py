@@ -43,7 +43,13 @@ from functools import partial
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-BOT_TOKEN = os.environ["BOT_TOKEN"]
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise RuntimeError(
+        "BOT_TOKEN environment variable is missing.\n"
+        "Set it in Render dashboard (Environment tab) or export BOT_TOKEN=... locally.\n"
+        "Get your token from @BotFather on Telegram."
+    )
 OWNER_ID = 666053962
 DB_PATH = "data.db"
 WHITELIST_PATH = "whitelist.json"
@@ -63,7 +69,7 @@ MINIAPP_URL = os.environ.get("MINIAPP_URL", "").rstrip("/")
 if not MINIAPP_URL:
     MINIAPP_URL = None  # Will show helpful message in /start
 
-# ── Mini App + Main Menu Keyboard ────────────────────────────────────────
+# ── Mini App + Main Menu Keyboard ───────────────────────────────
 
 def get_main_menu() -> InlineKeyboardMarkup:
     """Returns a nice inline keyboard with the Mini App + quick actions."""
@@ -89,14 +95,14 @@ def get_main_menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 
-# ── Logging ──────────────────────────────────────────────────────────────
+# ── Logging ─────────────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
-# ── Helpers ──────────────────────────────────────────────────────────────
+# ── Helpers ─────────────────────────────────────────
 
 def get_usage_db() -> sqlite3.Connection:
     """Return a thread-safe(ish) SQLite connection (one per coroutine)."""
@@ -198,7 +204,7 @@ def deduct_whitelist_use(user_id: int) -> None:
             save_whitelist(wl)
 
 
-# ── Check if user can use a tool for free ────────────────────────────────
+# ── Check if user can use a tool for free ──────────────────────────────────
 
 async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str]:
     """Returns (allowed, reason_if_denied)."""
@@ -220,7 +226,7 @@ async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str
     return False, "Free usage not available. Pay via in-chat payment."
 
 
-# ── URL Shortener (free self-hosted) ─────────────────────────────────────
+# ── URL Shortener (free self-hosted) ────────────────────────────────────
 
 def generate_short_code(length: int = 6) -> str:
     import secrets
@@ -294,7 +300,7 @@ def get_short_stats(short_code: str) -> dict | None:
     return None
 
 
-# ── Payment helpers (Telegram Stars) ─────────────────────────────────────
+# ── Payment helpers (Telegram Stars) ───────────────────────────────────
 
 async def send_star_invoice(
     update: Update, context: ContextTypes.DEFAULT_TYPE, title: str, description: str, price: int, payload: str
@@ -317,7 +323,7 @@ async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer(ok=True)
 
 
-# ── Commands ─────────────────────────────────────────────────────────────
+# ── Commands ─────────────────────────────────────────
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -363,9 +369,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/sticker — Create stickers from photos\n"
         "/balance — Check your usage & balance\n"
         "/contact — Contact the creator\n"
-        "/help — Show this message\n"
-        "/menu — Show all buttons\n
-"
+        "/help — Show this message\n\n"
         "<b>💡 Tips:</b>\n"
         "• Just send any video link from TikTok/YouTube/Instagram\n"
         "• Just send any photo to turn it into stickers\n"
@@ -382,7 +386,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "<b>🔧 Available Tools</b>\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "📥 <b>Video Downloader</b>\n"
         "Download videos from:\n"
         "• TikTok (no watermark)\n"
@@ -391,20 +395,17 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Facebook\n"
         "• Twitter / X\n"
         "• And many more!\n"
-        "💰 <b>Cost:</b> ⭐ 5 Stars per download\n
-"
+        "💰 <b>Cost:</b> ⭐ 5 Stars per download\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "🎨 <b>Sticker Creator</b>\n"
         "Turn your photos into Telegram sticker packs!\n"
         "• Auto-resize & optimize\n"
         "• Create custom sticker sets\n"
-        "💰 <b>Cost:</b> ⭐ 10 Stars per pack\n
-"
+        "💰 <b>Cost:</b> ⭐ 10 Stars per pack\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "<b>💳 Payment:</b> Pay with Telegram Stars (XTR)\n"
-        "• Just click the payment button when prompted\n
-"
-        "━━━━━━━━━━━━━━━━\n"
+        "• Just click the payment button when prompted\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
         "📞 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
@@ -416,16 +417,12 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def contact_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "<b>📞 Contact Information</b>\n\n"
-        "👤 <b>Creator:</b> Rakib Sojib
-"
-        "📱 <b>Telegram:</b> @roki1277
-
-"
+        "👤 <b>Creator:</b> Rakib Sojib\n"
+        "📱 <b>Telegram:</b> @roki1277\n\n"
         "For support, feature requests, or inquiries, "
         "feel free to reach out via Telegram!\n\n"
         "━━━━━━━━━━━━━━━━\n"
-        "🤖 Made with AI
-"
+        "🤖 Made with AI\n"
         "━━━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
@@ -528,7 +525,7 @@ async def sticker_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     )
 
 
-# ── URL Shortener command ────────────────────────────────────────────────
+# ── URL Shortener command ───────────────────────────────────────
 
 async def short_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ /short <url> [custom_code]  or /shorten """
@@ -568,7 +565,7 @@ async def short_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("❌ Failed to shorten URL. Try again.")
 
 
-# ── Admin commands ───────────────────────────────────────────────────────
+# ── Admin commands ───────────────────────────────────────
 
 async def admin_dailyfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user.id != OWNER_ID:
@@ -694,7 +691,7 @@ async def admin_addfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text("❌ Invalid ID or count.")
 
 
-# ── Message / auto-detect handler ────────────────────────────────────────
+# ── Message / auto-detect handler ─────────────────────────────────────
 
 VIDEO_LINK_PATTERN = re.compile(
     r"https?://\S+",
@@ -711,19 +708,19 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not msg:
         return
 
-    # ── Photo → sticker flow ──────────────────────────────────────────
+    # ── Photo → sticker flow ───────────────────────────
     if msg.photo:
         await handle_photo_for_sticker(update, context, msg)
         return
 
-    # ── Video link → download flow ────────────────────────────────────
+    # ── Video link → download flow ───────────────────────────
     if msg.text and VIDEO_LINK_PATTERN.search(msg.text):
         url = VIDEO_LINK_PATTERN.search(msg.text).group(0)
         await handle_video_link(update, context, url)
         return
 
 
-# ── Video download logic ─────────────────────────────────────────────────
+# ── Video download logic ───────────────────────────────────────
 
 async def handle_video_link(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str) -> None:
     user = update.effective_user
@@ -772,8 +769,10 @@ async def get_best_direct_url(source_url: str) -> str | None:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(source_url, download=False)
+                # Some extractors give a direct 'url'
                 if info and info.get("url"):
                     return info["url"]
+                # Pick the best format with a direct url
                 formats = info.get("formats", []) if info else []
                 for fmt in sorted(formats, key=lambda x: (x.get("height") or 0, x.get("filesize") or 0), reverse=True):
                     if fmt.get("url") and fmt.get("vcodec") != "none":
@@ -790,7 +789,12 @@ async def perform_download(
     update: Update, context: ContextTypes.DEFAULT_TYPE, url: str, user_id: int
 ) -> None:
     chat_id = update.effective_chat.id
-    status_msg = await update.message.reply_text("🔍 Finding best quality format...")
+    # Use effective_message or send directly (safer when triggered from Mini App web_app_data)
+    reply_target = update.message or update.effective_message
+    if reply_target:
+        status_msg = await reply_target.reply_text("🔍 Finding best quality format...")
+    else:
+        status_msg = await context.bot.send_message(chat_id=chat_id, text="🔍 Finding best quality format...")
 
     # === Method 1: Direct URL (Best & fastest - Telegram downloads for us) ===
     direct_url = await get_best_direct_url(url)
@@ -827,6 +831,7 @@ async def perform_download(
             if total:
                 new_text += f" / {total}"
 
+            # Only update if changed significantly (throttle)
             if new_text != progress["text"]:
                 progress["text"] = new_text
                 try:
@@ -836,6 +841,7 @@ async def perform_download(
                 except Exception:
                     pass
         elif d.get("status") in ("finished", "processing"):
+            # This covers the merging/post-processing phase after 100% download
             try:
                 asyncio.run_coroutine_threadsafe(
                     status_msg.edit_text("✅ Download finished. Processing (merging if needed)..."),
@@ -870,6 +876,7 @@ async def perform_download(
                 if not info:
                     return None
 
+                # Try to get the final filename from yt-dlp (important after merge)
                 try:
                     filename = ydl.prepare_filename(info)
                     if filename and Path(filename).exists():
@@ -877,6 +884,7 @@ async def perform_download(
                 except Exception:
                     pass
 
+                # Find the downloaded file
                 if "requested_downloads" in info and info["requested_downloads"]:
                     path = info["requested_downloads"][0].get("filepath")
                     if path and Path(path).exists():
@@ -886,6 +894,7 @@ async def perform_download(
                 for f in sorted(DOWNLOADS_DIR.glob(f"{video_id}.*"), key=lambda p: p.stat().st_size, reverse=True):
                     return str(f)
 
+                # fallback to largest recent file
                 candidates = sorted(
                     [f for f in DOWNLOADS_DIR.glob("*") if f.is_file()],
                     key=lambda p: p.stat().st_size, reverse=True
@@ -910,6 +919,7 @@ async def perform_download(
     file_size = Path(filepath).stat().st_size
     size_mb = file_size / (1024 * 1024)
 
+    # After 100% download, show clear next step (merging can happen after 100%)
     await status_msg.edit_text(
         f"✅ Download complete ({size_mb:.1f} MB).\n"
         f"📤 Uploading to you now... (large videos can take 1-5+ minutes)"
@@ -917,11 +927,12 @@ async def perform_download(
 
     try:
         with open(filepath, "rb") as f:
+            # For large files always use document (more reliable)
             await context.bot.send_document(
                 chat_id=chat_id,
                 document=f,
                 caption=f"📥 Best quality ({size_mb:.1f} MB)\nvia Amazing Tools Bot",
-                write_timeout=300,
+                write_timeout=300,   # longer for big uploads,
                 read_timeout=300,
             )
         await status_msg.delete()
@@ -939,7 +950,7 @@ async def perform_download(
         Path(filepath).unlink(missing_ok=True)
 
 
-# ── Sticker creation logic ───────────────────────────────────────────────
+# ── Sticker creation logic ───────────────────────────────────────
 
 async def handle_photo_for_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: Message) -> None:
     user = update.effective_user
@@ -962,6 +973,15 @@ async def perform_sticker_creation(
 ) -> None:
     msg_reply = await msg.reply_text("🎨 Creating your sticker pack...")
     user = msg.from_user
+
+    # Ensure we have the bot's username (required for sticker set naming)
+    bot_username = getattr(context.bot, "username", None)
+    if not bot_username:
+        try:
+            me = await context.bot.get_me()
+            bot_username = me.username or "amazingtoolsbot"
+        except Exception:
+            bot_username = "amazingtoolsbot"
 
     # Download the largest photo
     photo_file = await msg.photo[-1].get_file()
@@ -996,7 +1016,7 @@ async def perform_sticker_creation(
         return
 
     # Create a sticker set for the user
-    sticker_set_name = f"amazing_{user_id}_{int(time.time())}_by_{context.bot.username}"
+    sticker_set_name = f"amazing_{user_id}_{int(time.time())}_by_{bot_username}"
     pack_title = f"{user.first_name}'s Amazing Pack"
     try:
         with open(sticker_path, "rb") as f:
@@ -1032,7 +1052,7 @@ async def perform_sticker_creation(
         Path(sticker_path).unlink(missing_ok=True)
 
 
-# ── Successful payment handler ───────────────────────────────────────────
+# ── Successful payment handler ───────────────────────────────────────
 
 async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle a successful Telegram Stars payment (Message with successful_payment)."""
@@ -1057,7 +1077,7 @@ async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
 
 
-# ── Telegram Mini App (WebApp) data handler ──────────────────────────────
+# ── Telegram Mini App (WebApp) data handler ────────────────────────────────────
 
 async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle data sent from the beautiful Mini App."""
@@ -1070,6 +1090,7 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
     action = (payload.get("action") or "").lower()
     chat_id = update.effective_chat.id if update.effective_chat else None
+    user = update.effective_user
 
     # Always use direct send for reliability when data comes from WebApp
     async def safe_reply(text: str):
@@ -1081,6 +1102,7 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     if action == "download":
         url = payload.get("url", "").strip()
         if url:
+            # Directly perform using safe method + reuse logic
             await safe_reply("📥 Received your request from Mini App...")
             await handle_video_link(update, context, url)
         else:
@@ -1093,7 +1115,7 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             try:
                 if not long_url.startswith(("http://", "https://")):
                     long_url = "https://" + long_url
-                code = await shorten_url(user.id, long_url)
+                code = await shorten_url(user.id if user else 0, long_url)
                 base = MINIAPP_URL or "https://your-bot.onrender.com"
                 short_link = f"{base}/s/{code}"
                 await safe_reply(f"🔗 <b>Short URL created:</b>\n{short_link}")
@@ -1111,21 +1133,25 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await safe_reply("👋 Thanks! Use the buttons or send a link/photo directly.")
 
 
-# ── Mini App static file server (background thread) ──────────────────────
+# ── Mini App static file server (background thread) ───────────────────────────────────
 
 class MiniAppRequestHandler(SimpleHTTPRequestHandler):
     """Custom handler to ensure proper HTML serving for Telegram Mini App."""
     def __init__(self, *args, **kwargs):
+        # directory will be set via partial
         super().__init__(*args, **kwargs)
 
     def end_headers(self):
+        # Force correct content type for HTML
         if self.path.endswith(('.html', '/')) or self.path == '':
             self.send_header('Content-Type', 'text/html; charset=utf-8')
+        # Cache control for mini app (helps with Telegram)
         if self.path.endswith(('.html', '.js', '.css')):
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         super().end_headers()
 
     def do_GET(self):
+        # Handle short URL redirects: /s/abc123  (before webapp)
         if self.path.startswith('/s/'):
             code = self.path[3:].split('?')[0].split('#')[0]
             if code:
@@ -1141,11 +1167,13 @@ class MiniAppRequestHandler(SimpleHTTPRequestHandler):
                     self.send_error(404, "Short link not found")
                     return
 
+        # Redirect root to index.html (Mini App)
         if self.path in ('/', ''):
             self.path = '/index.html'
         return super().do_GET()
 
     def guess_type(self, path):
+        # Ensure .html is always text/html
         if path.endswith('.html'):
             return 'text/html'
         return super().guess_type(path)
@@ -1158,8 +1186,10 @@ def run_miniapp_server(host: str = "0.0.0.0", port: int = 8080) -> None:
         logger.warning("webapp/ directory not found — Mini App UI will not be served.")
         return
 
+    # Use custom handler with directory
     handler = partial(MiniAppRequestHandler, directory=str(webapp_dir))
 
+    # Use ThreadingHTTPServer so static assets + main bot can coexist better
     httpd = ThreadingHTTPServer((host, port), handler)
     logger.info(f"Mini App UI serving on http://{host}:{port} (from {webapp_dir})")
     try:
@@ -1180,13 +1210,15 @@ def start_miniapp_server_background() -> None:
     logger.info(f"Started Mini App static server thread on port {port}")
 
 
-# ── Main ─────────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────
 
 def main() -> None:
+    # Start the beautiful Mini App UI server in background (Render exposes $PORT)
     start_miniapp_server_background()
 
     app = Application.builder().token(BOT_TOKEN).build()
 
+    # Commands
     app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("tools", tools_cmd))
@@ -1201,13 +1233,17 @@ def main() -> None:
     app.add_handler(CommandHandler("whitelist", admin_whitelist, filters.User(user_id=OWNER_ID)))
     app.add_handler(CommandHandler("addfree", admin_addfree, filters.User(user_id=OWNER_ID)))
 
+    # Pre-checkout (answer payment query) & successful payment (handle after payment)
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_callback))
     app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment))
 
+    # Auto-detect handler for video links & photos
     app.add_handler(MessageHandler(filters.TEXT | filters.PHOTO, auto_detect))
 
+    # Handle data coming from the Telegram Mini App
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
 
+    # Handle clicks on the beautiful menu buttons
     app.add_handler(CallbackQueryHandler(menu_button_callback, pattern="^cmd_"))
 
     logger.info("Amazing Tools Bot starting...")
