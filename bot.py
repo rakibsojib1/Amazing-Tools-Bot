@@ -71,7 +71,7 @@ MINIAPP_URL = os.environ.get("MINIAPP_URL", "").rstrip("/")
 if not MINIAPP_URL:
     MINIAPP_URL = None  # Will show helpful message in /start
 
-# ── Mini App + Main Menu Keyboard ────────────────────────────────────────
+# ── Mini App + Main Menu Keyboard ─────────────────────────────────
 
 def get_main_menu() -> InlineKeyboardMarkup:
     """Returns a nice inline keyboard with the Mini App + quick actions."""
@@ -102,14 +102,14 @@ def get_main_menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 
-# ── Logging ──────────────────────────────────────────────────────────────
+# ── Logging ─────────────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
-# ── Helpers ──────────────────────────────────────────────────────────────
+# ── Helpers ─────────────────────────────────────────
 
 def get_usage_db() -> sqlite3.Connection:
     """Return a thread-safe(ish) SQLite connection (one per coroutine)."""
@@ -122,13 +122,13 @@ def get_usage_db() -> sqlite3.Connection:
             downloads INTEGER DEFAULT 0,
             stickers INTEGER DEFAULT 0,
             PRIMARY KEY (user_id, date)
-        )"""
+        """)
     )
     db.execute(
         """CREATE TABLE IF NOT EXISTS config (
             key TEXT PRIMARY KEY,
             value TEXT
-        )"""
+        """)
     )
     db.execute(
         """CREATE TABLE IF NOT EXISTS short_urls (
@@ -137,7 +137,7 @@ def get_usage_db() -> sqlite3.Connection:
             user_id INTEGER,
             created_at TEXT,
             clicks INTEGER DEFAULT 0
-        )"""
+        """)
     )
     return db
 
@@ -211,7 +211,7 @@ def deduct_whitelist_use(user_id: int) -> None:
             save_whitelist(wl)
 
 
-# ── Check if user can use a tool for free ────────────────────────────────
+# ── Check if user can use a tool for free ─────────────────────────
 
 async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str]:
     """Returns (allowed, reason_if_denied)."""
@@ -233,7 +233,7 @@ async def can_use_free(user_id: int, kind: str = "downloads") -> tuple[bool, str
     return False, "Free usage not available. Pay via in-chat payment."
 
 
-# ── URL Shortener (free self-hosted) ─────────────────────────────────────
+# ── URL Shortener (free self-hosted) ───────────────────────────
 
 def generate_short_code(length: int = 6) -> str:
     import secrets
@@ -291,7 +291,6 @@ def increment_short_click(short_code: str) -> None:
     )
     db.commit()
 
-
 def get_short_stats(short_code: str) -> dict | None:
     db = get_usage_db()
     row = db.execute(
@@ -338,7 +337,7 @@ def delete_short(short_code: str, user_id: int) -> bool:
     return cur.rowcount > 0
 
 
-# ── QR Code & Image Tools (Professional helpers) ─────────────────────────
+# ── QR Code & Image Tools (Professional helpers) ─────────────────────
 
 async def generate_qr_image(text: str) -> bytes:
     """Generate a clean, high-quality QR code image."""
@@ -524,7 +523,7 @@ async def images_to_pdf(photos: list) -> bytes:
     return buf.getvalue()
 
 
-# ── Payment helpers (Telegram Stars) ─────────────────────────────────────
+# ── Payment helpers (Telegram Stars) ─────────────────────────
 
 async def send_star_invoice(
     update: Update, context: ContextTypes.DEFAULT_TYPE, title: str, description: str, price: int, payload: str
@@ -547,7 +546,7 @@ async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer(ok=True)
 
 
-# ── Commands ─────────────────────────────────────────────────────────────
+# ── Commands ─────────────────────────────────────────
 
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -562,11 +561,11 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Send me a <b>video link</b> → download (paid)\n"
         "• Send me a <b>photo</b> → stickers (paid) or free image tools\n"
         "• Use /tools or the menu for everything\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
         "📞 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━━━━━━━━━"
     )
 
     # Show nice buttons including the beautiful Mini App
@@ -603,11 +602,11 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Just send any video link from TikTok/YouTube/Instagram\n"
         "• Just send any photo to turn it into stickers\n"
         "• The bot auto-detects what you send!\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
         "📞 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
@@ -615,7 +614,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = (
         "<b>🔧 Available Tools</b>\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "📥 <b>Video Downloader</b>\n"
         "Download videos from:\n"
         "• TikTok (no watermark)\n"
@@ -625,13 +624,13 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Twitter / X\n"
         "• And many more!\n"
         "💰 <b>Cost:</b> ⭐ 5 Stars per download\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "🎨 <b>Sticker Creator</b>\n"
         "Turn your photos into Telegram sticker packs!\n"
         "• Auto-resize & optimize\n"
         "• Create custom sticker sets\n"
         "💰 <b>Cost:</b> ⭐ 10 Stars per pack\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "📱 <b>QR Code Generator</b>\n"
         "Turn any text or link into a beautiful QR code instantly.\n"
         "Free • /qr your-text\n\n"
@@ -639,14 +638,14 @@ async def tools_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• Compress JPEG • Convert to WebP\n"
         "• Resize photos • Images → PDF\n"
         "Just send a photo and tap the buttons!\n\n"
-        "━━━━━━━━━━━━━━━━\\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "<b>💳 Payment:</b> Pay with Telegram Stars (XTR)\n"
         "• Just click the payment button when prompted\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "👤 Created by <b>Rakib Sojib</b>\n"
         "📞 Contact: <b>@roki1277</b>\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
@@ -658,9 +657,9 @@ async def contact_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         "📱 <b>Telegram:</b> @roki1277\n\n"
         "For support, feature requests, or inquiries, "
         "feel free to reach out via Telegram!\n\n"
-        "━━━━━━━━━━━━━━━━\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
         "🤖 Made with AI\n"
-        "━━━━━━━━━━━━━━━━"
+        "━━━━━━━━━━━━━━━━━━━━━━"
     )
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
@@ -759,7 +758,7 @@ async def balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     else:
         lines.append("\n💳 Paid-only mode — use in-chat payments.")
 
-    lines.append("\n━━━━━━━━━━━━━━━━\n👤 Created by <b>Rakib Sojib</b>\n📞 Contact: <b>@roki1277</b>\n🤖 Made with AI\n━━━━━━━━━━━━━━━━")
+    lines.append("\n━━━━━━━━━━━━━━━━━━\n👤 Created by <b>Rakib Sojib</b>\n📞 Contact: <b>@roki1277</b>\n🤖 Made with AI\n━━━━━━━━━━━━━━━━━━")
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
 
@@ -785,7 +784,7 @@ async def sticker_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     )
 
 
-# ── URL Shortener command ────────────────────────────────────────────────
+# ── URL Shortener command ───────────────────────────────────
 
 async def short_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ /short <url> [custom_code]  or /shorten """
@@ -829,7 +828,7 @@ async def short_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("❌ Failed to shorten URL. Try again.")
 
 
-# ── QR Code Command ──────────────────────────────────────────────────────
+# ── QR Code Command ───────────────────────────────────────
 
 async def qr_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Generate QR code from text or URL."""
@@ -860,7 +859,7 @@ async def qr_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"❌ QR generation failed: {e}")
 
 
-# ── Image Tools Commands (reply to photo) ────────────────────────────────
+# ── Image Tools Commands (reply to photo) ───────────────────────────
 
 async def compress_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _handle_image_command(update, context, "compress")
@@ -984,7 +983,7 @@ async def _handle_image_command(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text(f"❌ Processing failed: {e}")
 
 
-# ── Short URL Stats ──────────────────────────────────────────────────────
+# ── Short URL Stats ─────────────────────────────────────
 
 async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ /stats <short_code>  — View real click count for a short link """
@@ -1027,7 +1026,7 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
 
-# ── My Short Links ───────────────────────────────────────────────────────
+# ── My Short Links ─────────────────────────────────────────
 
 async def myshorts_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show the current user's own shortened links with click counts."""
@@ -1070,7 +1069,7 @@ async def myshorts_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML, reply_markup=get_main_menu())
 
 
-# ── Admin commands ───────────────────────────────────────────────────────
+# ── Admin commands ──────────────────────────────────────────
 
 async def admin_dailyfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user.id != OWNER_ID:
@@ -1196,7 +1195,7 @@ async def admin_addfree(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text("❌ Invalid ID or count.")
 
 
-# ── Image Tools Callback Handler (professional buttons) ──────────────────
+# ── Image Tools Callback Handler (professional buttons) ─────────────────────────
 
 async def image_tools_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle inline image tool buttons from photo offers."""
@@ -1277,7 +1276,7 @@ async def image_tools_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         await query.message.reply_text(f"❌ Failed: {str(e)[:120]}")
 
 
-# ── Message / auto-detect handler ────────────────────────────────────────
+# ── Message / auto-detect handler ───────────────────────────────────
 
 VIDEO_LINK_PATTERN = re.compile(
     r"https?://\S+",
@@ -1294,7 +1293,7 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not msg:
         return
 
-    # ── Photo handling: offer professional image tools + sticker option ─
+    # ── Photo handling: offer professional image tools + sticker option ──
     if msg.photo:
         # Store recent photos for PDF / tools
         if "photo_list" not in context.user_data:
@@ -1392,14 +1391,14 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await update.message.reply_text("❌ Invalid. Use e.g. 800 600 or 800 600 80 for resize+compress")
             return
 
-    # ── Video link → download flow ────────────────────────────────────
+    # ── Video link → download flow ───────────────────────
     if msg.text and VIDEO_LINK_PATTERN.search(msg.text):
         url = VIDEO_LINK_PATTERN.search(msg.text).group(0)
         await handle_video_link(update, context, url)
         return
 
 
-# ── Video download logic ─────────────────────────────────────────────────
+# ── Video download logic ─────────────────────────────────────
 
 async def handle_video_link(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str) -> None:
     user = update.effective_user
@@ -1629,7 +1628,7 @@ async def perform_download(
         Path(filepath).unlink(missing_ok=True)
 
 
-# ── Sticker creation logic ───────────────────────────────────────────────
+# ── Sticker creation logic ─────────────────────────────────────
 
 async def handle_photo_for_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: Message) -> None:
     user = update.effective_user
@@ -1644,7 +1643,7 @@ async def handle_photo_for_sticker(update: Update, context: ContextTypes.DEFAULT
         )
         return
 
-    await perform_sticker_creation(update, context, msg, user_id)
+    await perform_sticker_creation(update, context, msg, user.id)
 
 
 async def perform_sticker_creation(
@@ -1731,7 +1730,7 @@ async def perform_sticker_creation(
         Path(sticker_path).unlink(missing_ok=True)
 
 
-# ── Successful payment handler ───────────────────────────────────────────
+# ── Successful payment handler ─────────────────────────────────────
 
 async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle a successful Telegram Stars payment (Message with successful_payment)."""
@@ -1756,7 +1755,7 @@ async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
 
 
-# ── Telegram Mini App (WebApp) data handler ──────────────────────────────
+# ── Telegram Mini App (WebApp) data handler ───────────────────────────
 
 async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle data sent from the beautiful Mini App."""
@@ -1843,7 +1842,7 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await safe_reply("👋 Thanks! Use the buttons or send a link/photo directly.")
 
 
-# ── Mini App static file server (background thread) ──────────────────────
+# ── Mini App static file server (background thread) ───────────────────────────────
 
 class MiniAppRequestHandler(SimpleHTTPRequestHandler):
     """Custom handler to ensure proper HTML serving for Telegram Mini App."""
@@ -1942,7 +1941,7 @@ def start_miniapp_server_background() -> None:
     logger.info(f"Started Mini App static server thread on port {port}")
 
 
-# ── Main ─────────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────
 
 def main() -> None:
     # Start the beautiful Mini App UI server in background (Render exposes $PORT)
