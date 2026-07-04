@@ -125,11 +125,13 @@ def get_usage_db() -> sqlite3.Connection:
             stickers INTEGER DEFAULT 0,
             PRIMARY KEY (user_id, date)
         """)
+    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS config (
             key TEXT PRIMARY KEY,
             value TEXT
         """)
+    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS short_urls (
             short_code TEXT PRIMARY KEY,
@@ -138,6 +140,7 @@ def get_usage_db() -> sqlite3.Connection:
             created_at TEXT,
             clicks INTEGER DEFAULT 0
         """)
+    )
     return db
 
 
@@ -489,8 +492,10 @@ async def process_image_tool(photo, operation: str, **params) -> tuple[bytes, st
     return await loop.run_in_executor(None, _process)
 
 
-async def images_to_pdf(photos: list) -> bytes:
-    """Convert list of photos to a clean multi-page PDF."""
+async def images_to_pdf(photos: list, no_margin: bool = False) -> bytes:
+    """Convert list of photos to a clean multi-page PDF.
+    no_margin=True: images back-to-back with almost no extra space (full bleed style).
+    """
     if not photos:
         raise ValueError("No photos provided for PDF.")
 
@@ -499,7 +504,6 @@ async def images_to_pdf(photos: list) -> bytes:
         data = await download_photo(photo)
         img = Image.open(io.BytesIO(data))
         if img.mode in ("RGBA", "P"):
-            # Convert with white background for PDF
             background = Image.new("RGB", img.size, (255, 255, 255))
             if img.mode == "P":
                 img = img.convert("RGBA")
@@ -510,14 +514,27 @@ async def images_to_pdf(photos: list) -> bytes:
         images.append(img)
 
     buf = io.BytesIO()
-    images[0].save(
-        buf,
-        "PDF",
-        resolution=150.0,
-        save_all=True,
-        append_images=images[1:],
-        title="Amazing Tools - PDF",
-    )
+
+    if no_margin:
+        first = images[0]
+        first.save(
+            buf,
+            "PDF",
+            resolution=150.0,
+            save_all=True,
+            append_images=images[1:],
+            title="Amazing Tools - PDF (No Margin)",
+        )
+    else:
+        images[0].save(
+            buf,
+            "PDF",
+            resolution=150.0,
+            save_all=True,
+            append_images=images[1:],
+            title="Amazing Tools - PDF",
+        )
+
     buf.seek(0)
     return buf.getvalue()
 
@@ -1978,6 +1995,37 @@ class MiniAppRequestHandler(SimpleHTTPRequestHandler):
                         return
                 except Exception as e:
                     self.send_error(500, str(e))
+                    return
+
+        # Proxy download to avoid 403 from external hosts (Varnish etc)
+        if parsed.path == '/proxy-download':
+            target = qs.get('url', [''])[0]
+            if target:
+                try:
+                    req = urllib.request.Request(
+                        target,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Accept': '*/*',
+                        }
+                    )
+                    with urllib.request.urlopen(req, timeout=60) as resp:
+                        self.send_response(200)
+                        ctype = resp.headers.get('Content-Type', 'application/octet-stream')
+                        self.send_header('Content-Type', ctype)
+                        fname = 'download.mp4'
+                        self.send_header('Content-Disposition', f'attachment; filename="{fname}"')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+
+                        while True:
+                            chunk = resp.read(8192)
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                    return
+                except Exception as e:
+                    self.send_error(500, f"Proxy error: {str(e)[:100]}")
                     return
 
         # Handle short URL redirects: /s/abc123  (before webapp)
