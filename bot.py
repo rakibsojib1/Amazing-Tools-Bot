@@ -47,11 +47,13 @@ from functools import partial
 # ---------------------------------------------------------------------------
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
+    print("FATAL: BOT_TOKEN environment variable is missing.", flush=True)
     raise RuntimeError(
         "BOT_TOKEN environment variable is missing.\n"
-        "Set it in Render dashboard (Environment tab) or export BOT_TOKEN=... locally.\n"
-        "Get your token from @BotFather on Telegram."
+        "Go to your Render service → Environment → add BOT_TOKEN=your_token\n"
+        "Get the token from @BotFather on Telegram."
     )
+print("BOT_TOKEN found, starting bot...", flush=True)
 OWNER_ID = 666053962
 DB_PATH = "data.db"
 WHITELIST_PATH = "whitelist.json"
