@@ -46,24 +46,35 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen">
-  <!-- Professional Header - No close button -->
-  <header class="bg-slate-900/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-x-4">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg">
-          <i class="fa-solid fa-magic text-white text-2xl"></i>
+  <!-- Professional Header with Navigation -->
+  <header class="bg-slate-900/90 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-x-4">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg">
+            <i class="fa-solid fa-magic text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="font-display text-2xl font-semibold tracking-tighter">Amazing Tools</div>
+            <div class="text-[10px] text-slate-400 -mt-0.5">Professional • Local-first</div>
+          </div>
         </div>
-        <div>
-          <div class="font-display text-3xl font-semibold tracking-tighter">Amazing Tools</div>
-          <div class="text-xs text-slate-400 -mt-1">by Rakib Sojib • Professional toolkit</div>
-        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-x-1 text-sm bg-slate-800/60 rounded-2xl p-1 border border-white/10">
+          <a href="#video" class="px-4 py-1.5 rounded-xl hover:bg-white/10 transition font-medium">Video</a>
+          <a href="#shortener" class="px-4 py-1.5 rounded-xl hover:bg-white/10 transition font-medium">Shortener</a>
+          <a href="#images" class="px-4 py-1.5 rounded-xl hover:bg-white/10 transition font-medium">Images &amp; PDF</a>
+          <a href="#qr" class="px-4 py-1.5 rounded-xl hover:bg-white/10 transition font-medium">QR Code</a>
+        </nav>
       </div>
       
-      <div class="hidden md:flex items-center gap-x-2 text-sm">
-        <div class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium flex items-center gap-1.5">
-          <i class="fa-solid fa-check"></i>
-          <span>Works on all devices</span>
-        </div>
+      <!-- Mobile quick nav -->
+      <div class="md:hidden flex gap-2 mt-3 overflow-x-auto pb-1 text-sm">
+        <a href="#video" class="px-3 py-1 bg-slate-800 rounded-full whitespace-nowrap text-xs">📥 Video</a>
+        <a href="#shortener" class="px-3 py-1 bg-slate-800 rounded-full whitespace-nowrap text-xs">🔗 Shortener</a>
+        <a href="#images" class="px-3 py-1 bg-slate-800 rounded-full whitespace-nowrap text-xs">🖼️ Images</a>
+        <a href="#qr" class="px-3 py-1 bg-slate-800 rounded-full whitespace-nowrap text-xs">📱 QR</a>
       </div>
     </div>
   </header>
@@ -114,8 +125,8 @@
       </div>
     </div>
 
-    <!-- VIDEO -->
-    <div class="section-card glass rounded-3xl p-6 mb-6">
+    <!-- VIDEO DOWNLOADER -->
+    <div id="video" class="section-card glass rounded-3xl p-6 mb-6">
       <div class="flex items-start gap-4 mb-6">
         <div class="tool-icon bg-sky-500/10 shrink-0">
           <i class="fa-solid fa-download text-3xl text-sky-400"></i>
@@ -156,7 +167,7 @@
     </div>
 
     <!-- URL SHORTENER -->
-    <div class="section-card glass rounded-3xl p-6 mb-6">
+    <div id="shortener" class="section-card glass rounded-3xl p-6 mb-6">
       <div class="flex items-start gap-4 mb-6">
         <div class="tool-icon bg-emerald-500/10 shrink-0">
           <i class="fa-solid fa-link text-3xl text-emerald-400"></i>
@@ -181,7 +192,7 @@
     </div>
 
     <!-- IMAGE TOOLS -->
-    <div class="section-card glass rounded-3xl p-6 mb-6">
+    <div id="images" class="section-card glass rounded-3xl p-6 mb-6">
       <div class="flex items-start gap-4 mb-6">
         <div class="tool-icon bg-sky-500/10 shrink-0">
           <i class="fa-solid fa-image text-3xl text-sky-400"></i>
@@ -204,6 +215,8 @@
       </div>
 
       <div class="bg-slate-900/70 border border-white/10 rounded-3xl p-5 space-y-5">
+        
+        <!-- Resize -->
         <div>
           <div class="text-xs font-semibold tracking-widest text-slate-300 mb-2.5">CUSTOM RESIZE</div>
           <div class="grid grid-cols-2 gap-3">
@@ -231,16 +244,39 @@
           <button onclick="compressSelected()" class="py-3.5 rounded-2xl font-semibold bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-compress"></i> <span>Compress &amp; Download</span>
           </button>
+          
           <button onclick="addToPdfQueue()" class="py-3.5 rounded-2xl font-semibold bg-violet-600 hover:bg-violet-700 transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-pdf"></i> <span>Add to PDF Queue</span>
           </button>
         </div>
 
-        <div>
+        <!-- PDF Options -->
+        <div class="border-t border-white/10 pt-5">
+          <div class="text-xs font-semibold tracking-widest text-slate-300 mb-2.5">PDF OPTIONS</div>
+          
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <div class="text-[10px] text-slate-400 mb-1">PAGE LAYOUT</div>
+              <select id="pdf-layout" class="w-full bg-black border border-white/10 rounded-2xl px-3 py-2 text-sm">
+                <option value="portrait">Portrait (A4)</option>
+                <option value="landscape">Landscape (A4)</option>
+              </select>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 mb-1">MARGIN</div>
+              <select id="pdf-margin" class="w-full bg-black border border-white/10 rounded-2xl px-3 py-2 text-sm">
+                <option value="none">No Margin (images back-to-back, full bleed)</option>
+                <option value="small">Small Margin</option>
+                <option value="normal">Normal Margin</option>
+              </select>
+            </div>
+          </div>
+
           <button onclick="generateLocalPDF()" class="w-full py-4 rounded-2xl font-semibold bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center gap-2 text-base">
             <i class="fa-solid fa-file-pdf text-lg"></i>
             <span>Generate PDF from Queue</span>
           </button>
+          <div class="text-[10px] text-center text-slate-400 mt-1">No margin = images fill the page completely, one after another.</div>
         </div>
 
         <div class="flex gap-2 pt-1">
@@ -253,7 +289,7 @@
     </div>
 
     <!-- QR -->
-    <div class="section-card glass rounded-3xl p-6 mb-6">
+    <div id="qr" class="section-card glass rounded-3xl p-6 mb-6">
       <div class="flex items-start gap-4 mb-6">
         <div class="tool-icon bg-amber-500/10 shrink-0">
           <i class="fa-solid fa-qrcode text-3xl text-amber-400"></i>
@@ -306,10 +342,9 @@
   </div>
 
   <script>
-    // Tailwind + core functions (preserved from original)
-    function initTelegramWebApp() { /* non blocking for standalone */ }
+    function initTelegramWebApp() { /* non blocking */ }
     function showSentFeedback(m) { console.log(m); }
-    function closeApp() { window.close(); }
+    function closeApp() { if (window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.close(); else window.close(); }
 
     function generateQR() {
       const text = document.getElementById('qr-text').value.trim();
@@ -410,18 +445,54 @@
     let pdfQueue = [];
     function addToPdfQueue() { pdfQueue.push(...getSelectedImgs()); alert('Added to PDF queue'); }
 
-    function generateLocalPDF() {
-      const imgs = pdfQueue.length ? pdfQueue : getSelectedImgs();
-      if (!imgs.length) return alert('Add images first');
-      const {jsPDF} = window.jspdf;
-      const doc = new jsPDF();
-      imgs.forEach((img, idx) => {
-        if (idx > 0) doc.addPage();
-        const c = document.createElement('canvas'); c.width=img.width; c.height=img.height;
-        c.getContext('2d').drawImage(img,0,0);
-        doc.addImage(c.toDataURL('image/jpeg',0.9), 'JPEG', 15, 15, 180, 180 * (img.height/img.width));
-      });
-      doc.save('images.pdf');
+    async function generateLocalPDF() {
+      if (!pdfQueue.length && !selectedImages.length) {
+        alert('Add images to queue or select some first');
+        return;
+      }
+      const imagesToUse = pdfQueue.length ? pdfQueue : selectedImages.map(x => x.img);
+
+      const layout = document.getElementById('pdf-layout')?.value || 'portrait';
+      const marginMode = document.getElementById('pdf-margin')?.value || 'none';
+
+      const { jsPDF } = window.jspdf;
+      const orientation = layout === 'landscape' ? 'l' : 'p';
+      const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
+
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+
+      let margin = 20;
+      if (marginMode === 'none') margin = 0;
+      else if (marginMode === 'small') margin = 8;
+
+      for (let i = 0; i < imagesToUse.length; i++) {
+        const img = imagesToUse[i];
+
+        if (i > 0) doc.addPage();
+
+        let targetW = pageW - (margin * 2);
+        let targetH = pageH - (margin * 2);
+
+        let w = img.width;
+        let h = img.height;
+        const ratio = Math.min(targetW / w, targetH / h);
+        w = w * ratio;
+        h = h * ratio;
+
+        const x = (pageW - w) / 2;
+        const y = margin;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+        doc.addImage(dataUrl, 'JPEG', x, y, w, h);
+      }
+
+      doc.save('amazing_tools_images.pdf');
     }
 
     function clearImageQueue() { pdfQueue=[]; selectedImages=[]; document.getElementById('image-thumbs').innerHTML=''; document.getElementById('image-list').classList.add('hidden'); }
@@ -454,15 +525,26 @@
       } catch(e){ fmtBox.innerHTML = 'Analysis failed. Try bot.'; }
     }
 
-    function triggerDirectDownload(url, name) {
+    function triggerDirectDownload(directUrl, suggestedName) {
+      const proxyUrl = `/proxy-download?url=${encodeURIComponent(directUrl)}`;
       const a = document.createElement('a');
-      a.href = url; a.download = name; a.click();
-      const n = document.createElement('div'); n.className='text-emerald-400 text-xs mt-1'; n.textContent='Download started to your device storage.';
-      document.getElementById('video-formats').appendChild(n);
-      setTimeout(()=>n.remove(), 3000);
+      a.href = proxyUrl;
+      a.download = suggestedName || 'video.mp4';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      const note = document.createElement('div');
+      note.className = 'mt-1 text-[10px] text-emerald-400';
+      note.textContent = 'Download started via server proxy.';
+      const container = document.getElementById('video-formats');
+      if (container) {
+        container.appendChild(note);
+        setTimeout(()=>note.remove(), 4000);
+      }
     }
 
-    function requestVideoDownload() { alert('Use the Analyze button above for direct download.'); }
+    function requestVideoDownload() { alert('Use Analyze button for direct.'); }
 
     function shortenUrl() {
       const url = document.getElementById('long-url').value.trim();
@@ -477,9 +559,9 @@
       });
     }
 
-    function requestImageTool() { alert('Image tools now fully work above in the page (local).'); }
+    function requestImageTool() { alert('Image tools fully work in this page (local).'); }
 
-    function boot() { console.log('%c[Amazing Tools] Professional UI ready', 'color:#64748b'); }
+    function boot() { console.log('%c[Amazing Tools] Pro UI + PDF options + 403 fix ready', 'color:#22c55e'); }
     window.onload = boot;
   </script>
 </body>
