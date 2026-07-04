@@ -88,7 +88,6 @@ async def is_server_busy():
         return True, f"⚠️ Server is under heavy load (RAM: {ram}%). Please try later! 🚀"
     return False, ""
 
-
 # ── Mini App + Main Menu Keyboard ────────────────────────────
 
 def get_main_menu() -> InlineKeyboardMarkup:
@@ -125,7 +124,6 @@ def get_image_menu() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("📐 Resize", callback_data="img_hint:resize"), InlineKeyboardButton("📄 PDF", callback_data="img_hint:pdf")],
         [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="menu_main")]
     ])
-
 
 
 # ── Logging ──────────────────────────────────
@@ -781,16 +779,13 @@ async def menu_button_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode=ParseMode.HTML,
             reply_markup=get_main_menu()
         )
-    elif data == "cmd_image":
-        await query.message.reply_text(
-            "🖼️ <b>Image Tools (Free)</b>\n\n"
-            "• Send any photo → buttons appear for Compress / WebP / Resize / Filters / PDF\n\n"
-            "Commands: /compress /webp /resize /pdf\n\n"
-            "Photos are only temporarily referenced in memory (cleared after processing). Nothing is stored in database or on disk.\n\n"
-            "Mini App has quality slider + presets for easier use.",
-            parse_mode=ParseMode.HTML,
-            reply_markup=get_main_menu()
-        )
+    elif data == "menu_image":
+        await query.message.edit_text("🖼️ <b>Image Tools</b>\nChoose an option then send a photo.", parse_mode=ParseMode.HTML, reply_markup=get_image_menu())
+    elif data == "menu_main":
+        await query.message.edit_text("👇 Main Menu:", reply_markup=get_main_menu())
+    elif data.startswith("img_hint:"):
+        tool = data.split(":")[1]
+        await query.message.reply_text(f"📸 Please <b>send the photo</b> for {tool}!", parse_mode=ParseMode.HTML)
     elif data == "cmd_myshorts":
         await myshorts_cmd(update, context)
     else:
@@ -1624,7 +1619,6 @@ async def perform_download(
 ) -> None:
     busy, msg = await is_server_busy()
     if busy:
-        # Use effective_message or send directly
         reply_target = update.message or update.effective_message
         if reply_target:
             await reply_target.reply_text(msg)
@@ -1632,167 +1626,166 @@ async def perform_download(
             await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
         return
     async with heavy_task_lock:
+        chat_id = update.effective_chat.id
+        # Use effective_message or send directly (safer when triggered from Mini App web_app_data)
+        reply_target = update.message or update.effective_message
+        if reply_target:
+            status_msg = await reply_target.reply_text("🔍 Finding best quality format...")
+        else:
+            status_msg = await context.bot.send_message(chat_id=chat_id, text="🔍 Finding best quality format...")
 
-    chat_id = update.effective_chat.id
-    # Use effective_message or send directly (safer when triggered from Mini App web_app_data)
-    reply_target = update.message or update.effective_message
-    if reply_target:
-        status_msg = await reply_target.reply_text("🔍 Finding best quality format...")
-    else:
-        status_msg = await context.bot.send_message(chat_id=chat_id, text="🔍 Finding best quality format...")
+        # === Method 1: Direct URL (Best & fastest - Telegram downloads for us) ===
+        direct_url = await get_best_direct_url(url)
+        if direct_url:
+            try:
+                await status_msg.edit_text("🚀 Sending best quality (Telegram is fetching it)...")
+                await context.bot.send_video(
+                    chat_id=chat_id,
+                    video=direct_url,
+                    caption="📥 Best quality via Amazing Tools Bot",
+                    write_timeout=180,
+                )
+                await status_msg.delete()
+                deduct_whitelist_use(user_id)
+                increment_usage(user_id, "downloads")
+                return
+            except Exception as e:
+                logger.info(f"Direct URL method failed for {url}, falling back to server download: {e}")
 
-    # === Method 1: Direct URL (Best & fastest - Telegram downloads for us) ===
-    direct_url = await get_best_direct_url(url)
-    if direct_url:
-        try:
-            await status_msg.edit_text("🚀 Sending best quality (Telegram is fetching it)...")
-            await context.bot.send_video(
-                chat_id=chat_id,
-                video=direct_url,
-                caption="📥 Best quality via Amazing Tools Bot",
-                write_timeout=180,
-            )
-            await status_msg.delete()
-            deduct_whitelist_use(user_id)
-            increment_usage(user_id, "downloads")
-            return
-        except Exception as e:
-            logger.info(f"Direct URL method failed for {url}, falling back to server download: {e}")
+        # === Method 2: Full download on server with live progress (fallback) ===
+        await status_msg.edit_text("⏳ Downloading best quality... 0%")
 
-    # === Method 2: Full download on server with live progress (fallback) ===
-    await status_msg.edit_text("⏳ Downloading best quality... 0%")
+        loop = asyncio.get_running_loop()
+        progress = {"text": "⏳ Downloading best quality... 0%"}
 
-    loop = asyncio.get_running_loop()
-    progress = {"text": "⏳ Downloading best quality... 0%"}
+        def progress_hook(d):
+            if d["status"] == "downloading":
+                percent = d.get("_percent_str", "0%").strip()
+                speed = d.get("_speed_str", "")
+                total = d.get("_total_bytes_str", d.get("_total_bytes_estimate_str", ""))
+                new_text = f"⏳ Downloading best quality... {percent}"
+                if speed:
+                    new_text += f" ({speed})"
+                if total:
+                    new_text += f" / {total}"
 
-    def progress_hook(d):
-        if d["status"] == "downloading":
-            percent = d.get("_percent_str", "0%").strip()
-            speed = d.get("_speed_str", "")
-            total = d.get("_total_bytes_str", d.get("_total_bytes_estimate_str", ""))
-            new_text = f"⏳ Downloading best quality... {percent}"
-            if speed:
-                new_text += f" ({speed})"
-            if total:
-                new_text += f" / {total}"
-
-            # Only update if changed significantly (throttle)
-            if new_text != progress["text"]:
-                progress["text"] = new_text
+                # Only update if changed significantly (throttle)
+                if new_text != progress["text"]:
+                    progress["text"] = new_text
+                    try:
+                        asyncio.run_coroutine_threadsafe(
+                            status_msg.edit_text(new_text), loop
+                        )
+                    except Exception:
+                        pass
+            elif d.get("status") in ("finished", "processing"):
+                # This covers the merging/post-processing phase after 100% download
                 try:
                     asyncio.run_coroutine_threadsafe(
-                        status_msg.edit_text(new_text), loop
+                        status_msg.edit_text("✅ Download finished. Processing (merging if needed)..."),
+                        loop
                     )
                 except Exception:
                     pass
-        elif d.get("status") in ("finished", "processing"):
-            # This covers the merging/post-processing phase after 100% download
+
+        def _download() -> str | None:
+            """Server-side download with progress hook."""
+            import yt_dlp
+
+            out_tmpl = str(DOWNLOADS_DIR / "%(id)s.%(ext)s")
+            ydl_opts = {
+                "outtmpl": out_tmpl,
+                "quiet": True,
+                "no_warnings": True,
+                "format": "bv*+ba/b",
+                "merge_output_format": "mp4",
+                "noplaylist": True,
+                "retries": 5,
+                "fragment_retries": 5,
+                "progress_hooks": [progress_hook],
+                "http_headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                },
+                "nocheckcertificate": True,
+            }
             try:
-                asyncio.run_coroutine_threadsafe(
-                    status_msg.edit_text("✅ Download finished. Processing (merging if needed)..."),
-                    loop
-                )
-            except Exception:
-                pass
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    if not info:
+                        return None
 
-    def _download() -> str | None:
-        """Server-side download with progress hook."""
-        import yt_dlp
+                    # Try to get the final filename from yt-dlp (important after merge)
+                    try:
+                        filename = ydl.prepare_filename(info)
+                        if filename and Path(filename).exists():
+                            return filename
+                    except Exception:
+                        pass
 
-        out_tmpl = str(DOWNLOADS_DIR / "%(id)s.%(ext)s")
-        ydl_opts = {
-            "outtmpl": out_tmpl,
-            "quiet": True,
-            "no_warnings": True,
-            "format": "bv*+ba/b",
-            "merge_output_format": "mp4",
-            "noplaylist": True,
-            "retries": 5,
-            "fragment_retries": 5,
-            "progress_hooks": [progress_hook],
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            },
-            "nocheckcertificate": True,
-        }
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                if not info:
-                    return None
+                    # Find the downloaded file
+                    if "requested_downloads" in info and info["requested_downloads"]:
+                        path = info["requested_downloads"][0].get("filepath")
+                        if path and Path(path).exists():
+                            return path
 
-                # Try to get the final filename from yt-dlp (important after merge)
-                try:
-                    filename = ydl.prepare_filename(info)
-                    if filename and Path(filename).exists():
-                        return filename
-                except Exception:
-                    pass
+                    video_id = info.get("id") or info.get("webpage_url_basename", "video")
+                    for f in sorted(DOWNLOADS_DIR.glob(f"{video_id}.*"), key=lambda p: p.stat().st_size, reverse=True):
+                        return str(f)
 
-                # Find the downloaded file
-                if "requested_downloads" in info and info["requested_downloads"]:
-                    path = info["requested_downloads"][0].get("filepath")
-                    if path and Path(path).exists():
-                        return path
+                    # fallback to largest recent file
+                    candidates = sorted(
+                        [f for f in DOWNLOADS_DIR.glob("*") if f.is_file()],
+                        key=lambda p: p.stat().st_size, reverse=True
+                    )
+                    return str(candidates[0]) if candidates else None
+            except Exception as exc:
+                logger.error(f"yt-dlp download error for {url}: {exc}")
+                return None
 
-                video_id = info.get("id") or info.get("webpage_url_basename", "video")
-                for f in sorted(DOWNLOADS_DIR.glob(f"{video_id}.*"), key=lambda p: p.stat().st_size, reverse=True):
-                    return str(f)
+        filepath = await loop.run_in_executor(None, _download)
 
-                # fallback to largest recent file
-                candidates = sorted(
-                    [f for f in DOWNLOADS_DIR.glob("*") if f.is_file()],
-                    key=lambda p: p.stat().st_size, reverse=True
-                )
-                return str(candidates[0]) if candidates else None
-        except Exception as exc:
-            logger.error(f"yt-dlp download error for {url}: {exc}")
-            return None
-
-    filepath = await loop.run_in_executor(None, _download)
-
-    if not filepath or not Path(filepath).exists():
-        await status_msg.edit_text(
-            "❌ Failed to download video.\n\n"
-            "• Site blocks downloaders / needs login\n"
-            "• Private, geo-restricted or live video\n"
-            "• No downloadable format found\n\n"
-            "Try another link (YouTube / TikTok / Instagram usually work great)."
-        )
-        return
-
-    file_size = Path(filepath).stat().st_size
-    size_mb = file_size / (1024 * 1024)
-
-    # After 100% download, show clear next step (merging can happen after 100%)
-    await status_msg.edit_text(
-        f"✅ Download complete ({size_mb:.1f} MB).\n"
-        f"📤 Uploading to you now... (large videos can take 1-5+ minutes)"
-    )
-
-    try:
-        with open(filepath, "rb") as f:
-            # For large files always use document (more reliable)
-            await context.bot.send_document(
-                chat_id=chat_id,
-                document=f,
-                caption=f"📥 Best quality ({size_mb:.1f} MB)\nvia Amazing Tools Bot",
-                write_timeout=300,   # longer for big uploads
-                read_timeout=300,
+        if not filepath or not Path(filepath).exists():
+            await status_msg.edit_text(
+                "❌ Failed to download video.\n\n"
+                "• Site blocks downloaders / needs login\n"
+                "• Private, geo-restricted or live video\n"
+                "• No downloadable format found\n\n"
+                "Try another link (YouTube / TikTok / Instagram usually work great)."
             )
-        await status_msg.delete()
-        deduct_whitelist_use(user_id)
-        increment_usage(user_id, "downloads")
-    except Exception as exc:
-        logger.error(f"Send error for {size_mb:.1f}MB file: {exc}")
+            return
+
+        file_size = Path(filepath).stat().st_size
+        size_mb = file_size / (1024 * 1024)
+
+        # After 100% download, show clear next step (merging can happen after 100%)
         await status_msg.edit_text(
-            f"✅ File downloaded successfully ({size_mb:.1f} MB) on server.\n"
-            "❌ But sending to Telegram failed or timed out.\n\n"
-            "This often happens with very large videos (>100MB) on free Render.\n"
-            "Try a smaller quality or different link."
+            f"✅ Download complete ({size_mb:.1f} MB).\n"
+            f"📤 Uploading to you now... (large videos can take 1-5+ minutes)"
         )
-    finally:
-        Path(filepath).unlink(missing_ok=True)
+
+        try:
+            with open(filepath, "rb") as f:
+                # For large files always use document (more reliable)
+                await context.bot.send_document(
+                    chat_id=chat_id,
+                    document=f,
+                    caption=f"📥 Best quality ({size_mb:.1f} MB)\nvia Amazing Tools Bot",
+                    write_timeout=300,   # longer for big uploads
+                    read_timeout=300,
+                )
+            await status_msg.delete()
+            deduct_whitelist_use(user_id)
+            increment_usage(user_id, "downloads")
+        except Exception as exc:
+            logger.error(f"Send error for {size_mb:.1f}MB file: {exc}")
+            await status_msg.edit_text(
+                f"✅ File downloaded successfully ({size_mb:.1f} MB) on server.\n"
+                "❌ But sending to Telegram failed or timed out.\n\n"
+                "This often happens with very large videos (>100MB) on free Render.\n"
+                "Try a smaller quality or different link."
+            )
+        finally:
+            Path(filepath).unlink(missing_ok=True)
 
 
 # ── Sticker creation logic ──────────────────────────────────
@@ -1821,86 +1814,85 @@ async def perform_sticker_creation(
         await msg.reply_text(msg_busy)
         return
     async with heavy_task_lock:
+        msg_reply = await msg.reply_text("🎨 Creating your sticker pack...")
+        user = msg.from_user
 
-    msg_reply = await msg.reply_text("🎨 Creating your sticker pack...")
-    user = msg.from_user
+        # Ensure we have the bot's username (required for sticker set naming)
+        bot_username = getattr(context.bot, "username", None)
+        if not bot_username:
+            try:
+                me = await context.bot.get_me()
+                bot_username = me.username or "amazingtoolsbot"
+            except Exception:
+                bot_username = "amazingtoolsbot"
 
-    # Ensure we have the bot's username (required for sticker set naming)
-    bot_username = getattr(context.bot, "username", None)
-    if not bot_username:
+        # Download the largest photo
+        photo_file = await msg.photo[-1].get_file()
+        loop = asyncio.get_event_loop()
+
+        def _create_sticker() -> str | None:
+            """Convert photo to PNG sticker format."""
+            try:
+                resp = urllib.request.urlopen(photo_file.file_path, timeout=30)
+                img_data = resp.read()
+                img = Image.open(io.BytesIO(img_data))
+                # Convert to RGBA if needed
+                if img.mode != "RGBA":
+                    img = img.convert("RGBA")
+                # Resize to fit 512x512 (Telegram sticker size)
+                img.thumbnail((512, 512), Image.LANCZOS)
+                # Create a square canvas
+                canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
+                offset = ((512 - img.width) // 2, (512 - img.height) // 2)
+                canvas.paste(img, offset)
+                # Save as PNG (Telegram accepts PNG for static stickers)
+                out_path = str(DOWNLOADS_DIR / f"sticker_{user_id}_{int(time.time())}.png")
+                canvas.save(out_path, "PNG")
+                return out_path
+            except Exception as exc:
+                logger.error(f"Sticker creation error: {exc}")
+                return None
+
+        sticker_path = await loop.run_in_executor(None, _create_sticker)
+        if not sticker_path:
+            await msg_reply.edit_text("❌ Failed to create sticker.")
+            return
+
+        # Create a sticker set for the user
+        sticker_set_name = f"amazing_{user_id}_{int(time.time())}_by_{bot_username}"
+        pack_title = f"{user.first_name}'s Amazing Pack"
         try:
-            me = await context.bot.get_me()
-            bot_username = me.username or "amazingtoolsbot"
-        except Exception:
-            bot_username = "amazingtoolsbot"
-
-    # Download the largest photo
-    photo_file = await msg.photo[-1].get_file()
-    loop = asyncio.get_event_loop()
-
-    def _create_sticker() -> str | None:
-        """Convert photo to PNG sticker format."""
-        try:
-            resp = urllib.request.urlopen(photo_file.file_path, timeout=30)
-            img_data = resp.read()
-            img = Image.open(io.BytesIO(img_data))
-            # Convert to RGBA if needed
-            if img.mode != "RGBA":
-                img = img.convert("RGBA")
-            # Resize to fit 512x512 (Telegram sticker size)
-            img.thumbnail((512, 512), Image.LANCZOS)
-            # Create a square canvas
-            canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
-            offset = ((512 - img.width) // 2, (512 - img.height) // 2)
-            canvas.paste(img, offset)
-            # Save as PNG (Telegram accepts PNG for static stickers)
-            out_path = str(DOWNLOADS_DIR / f"sticker_{user_id}_{int(time.time())}.png")
-            canvas.save(out_path, "PNG")
-            return out_path
+            with open(sticker_path, "rb") as f:
+                sticker_data = f.read()
+            sticker = InputSticker(
+                sticker=sticker_data,
+                emoji_list=["😊"],
+                format="static",
+            )
+            await context.bot.create_new_sticker_set(
+                user_id=user_id,
+                name=sticker_set_name,
+                title=pack_title,
+                stickers=[sticker],
+                sticker_format="static",
+            )
+            await msg_reply.edit_text(
+                f"✅ Sticker pack created!\n\n"
+                f"📦 <b>{pack_title}</b>\n"
+                f"Tap <a href='https://t.me/addstickers/{sticker_set_name}'>一点这里</a> to add it to Telegram.\n\n"
+                f"Use /sticker to create more packs!",
+                parse_mode=ParseMode.HTML,
+            )
+            deduct_whitelist_use(user_id)
+            increment_usage(user_id, "stickers")
         except Exception as exc:
-            logger.error(f"Sticker creation error: {exc}")
-            return None
-
-    sticker_path = await loop.run_in_executor(None, _create_sticker)
-    if not sticker_path:
-        await msg_reply.edit_text("❌ Failed to create sticker.")
-        return
-
-    # Create a sticker set for the user
-    sticker_set_name = f"amazing_{user_id}_{int(time.time())}_by_{bot_username}"
-    pack_title = f"{user.first_name}'s Amazing Pack"
-    try:
-        with open(sticker_path, "rb") as f:
-            sticker_data = f.read()
-        sticker = InputSticker(
-            sticker=sticker_data,
-            emoji_list=["😊"],
-            format="static",
-        )
-        await context.bot.create_new_sticker_set(
-            user_id=user_id,
-            name=sticker_set_name,
-            title=pack_title,
-            stickers=[sticker],
-            sticker_format="static",
-        )
-        await msg_reply.edit_text(
-            f"✅ Sticker pack created!\n\n"
-            f"📦 <b>{pack_title}</b>\n"
-            f"Tap <a href='https://t.me/addstickers/{sticker_set_name}'>一点这里</a> to add it to Telegram.\n\n"
-            f"Use /sticker to create more packs!",
-            parse_mode=ParseMode.HTML,
-        )
-        deduct_whitelist_use(user_id)
-        increment_usage(user_id, "stickers")
-    except Exception as exc:
-        logger.error(f"Sticker set creation error: {exc}")
-        await msg_reply.edit_text(
-            f"❌ Couldn't create sticker pack. Telegram may have limits. "
-            f"Error: {exc}"
-        )
-    finally:
-        Path(sticker_path).unlink(missing_ok=True)
+            logger.error(f"Sticker set creation error: {exc}")
+            await msg_reply.edit_text(
+                f"❌ Couldn't create sticker pack. Telegram may have limits. "
+                f"Error: {exc}"
+            )
+        finally:
+            Path(sticker_path).unlink(missing_ok=True)
 
 
 # ── Successful payment handler ──────────────────────────────────
