@@ -1,1 +1,323 @@
-[READ FULL FROM LOCAL - using actual file content]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Amazing Tools • Mini App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space-Grotesk:wght@500;600&amp;display=swap');
+    :root { --tg-theme-bg-color: #0f172a; --tg-theme-text-color: #f1f5f9; }
+    body { font-family: 'Inter', system_ui, sans-serif; }
+    .font-display { font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif; }
+    .glass { background: rgba(255,255,255, 0.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255, 0.08); }
+    .section-card { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1); }
+    .section-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+    .tg-button { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); transition: all 0.2s ease; }
+    .tg-button:active { transform: scale(0.985); }
+    .tool-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 16px; }
+    .mini-header { background: linear-gradient(90deg, #0f172a, #1e2937); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen pb-8">
+  <div class="mini-header sticky top-0 z-50 px-5 pt-4 pb-4 border-b border-white/10">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-inner">
+          <i class="fa-solid fa-magic text-white text-2xl"></i>
+        </div>
+        <div>
+          <div class="font-display text-2xl font-semibold tracking-tighter">Amazing Tools</div>
+          <div class="text-[10px] text-slate-400 -mt-1">by Rakib Sojib</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-x-2">
+        <div onclick="closeApp()" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white active:bg-white/10 rounded-2xl transition-colors">
+          <i class="fa-solid fa-times text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-md mx-auto px-5 pt-6">
+    <div class="mb-6">
+      <div id="user-greeting" class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-slate-800 rounded-2xl overflow-hidden border border-white/10">
+          <img id="user-avatar" class="w-full h-full object-cover" src="https://api.dicebear.com/7.x/thumbs/svg?seed=amazing" alt="">
+        </div>
+        <div>
+          <div id="greeting-text" class="text-lg font-semibold">Hi there!</div>
+          <div class="text-xs text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> <span>Online • Full local mode</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO (FULL STANDALONE + DIRECT) -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-sky-500/10"><i class="fa-solid fa-download text-3xl text-sky-400"></i></div>
+        <div><div class="font-semibold text-xl tracking-tight">Video Downloader</div><div class="text-xs text-slate-400">Best quality • Direct to phone storage</div></div>
+      </div>
+      <div class="mb-3">
+        <input id="video-url" type="text" placeholder="https://youtube.com/... or tiktok link" class="w-full bg-slate-900 border border-white/10 focus:border-sky-500 placeholder:text-slate-500 text-sm px-4 py-3.5 rounded-2xl outline-none">
+      </div>
+      <div class="flex gap-2 mb-3">
+        <button onclick="analyzeVideo()" class="flex-1 py-3 rounded-2xl font-semibold bg-sky-600 hover:bg-sky-700 text-sm">Show Best Qualities</button>
+        <button onclick="requestVideoDownload()" class="px-4 py-3 rounded-2xl text-sm border border-white/20">Send to Bot</button>
+      </div>
+      <div id="video-results" class="hidden mt-3 p-3 bg-slate-900/60 rounded-2xl text-sm">
+        <div class="text-xs text-slate-400 mb-2 font-medium">Click a quality to download directly:</div>
+        <div id="video-formats" class="space-y-1.5"></div>
+      </div>
+    </div>
+
+    <!-- URL SHORTENER -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-emerald-500/10"><i class="fa-solid fa-link text-3xl text-emerald-400"></i></div>
+        <div><div class="font-semibold text-xl tracking-tight">URL Shortener</div></div>
+      </div>
+      <input id="long-url" type="text" placeholder="https://very-long-link.com/..." class="w-full bg-slate-900 border border-white/10 text-sm px-4 py-3.5 rounded-2xl mb-2">
+      <button onclick="shortenUrl()" class="w-full py-3 rounded-2xl bg-emerald-600 font-semibold">Create Short Link (direct)</button>
+    </div>
+
+    <!-- IMAGE TOOLS - 100% LOCAL + MULTI + CUSTOM -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="tool-icon bg-sky-500/10"><i class="fa-solid fa-image text-3xl text-sky-400"></i></div>
+        <div><div class="font-semibold text-xl tracking-tight">Image Tools (Full Local)</div><div class="text-xs text-slate-400">Multi photos • Custom W×H • PDF • Filters</div></div>
+      </div>
+
+      <input type="file" id="local-img" accept="image/*" multiple class="w-full text-sm mb-2">
+      <div id="local-preview" class="text-xs text-emerald-400 mb-2"></div>
+
+      <div id="image-list" class="mb-3 hidden">
+        <div class="text-xs mb-1">Selected:</div>
+        <div id="image-thumbs" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="mb-3 p-3 bg-slate-900/70 rounded-2xl">
+        <div class="text-xs font-medium mb-1">Custom Resize</div>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="resize-w" type="number" value="1280" class="bg-slate-950 border border-white/10 rounded px-3 py-1.5 text-sm" placeholder="Width">
+          <input id="resize-h" type="number" value="720" class="bg-slate-950 border border-white/10 rounded px-3 py-1.5 text-sm" placeholder="Height">
+        </div>
+        <label class="text-xs mt-1 block"><input type="checkbox" id="keep-aspect" checked> keep aspect</label>
+        <div class="flex gap-2 mt-2">
+          <button onclick="applyLocalResize()" class="flex-1 py-2 bg-sky-700 rounded text-sm">Resize</button>
+          <button onclick="applyLocalResize(true)" class="flex-1 py-2 bg-sky-800 rounded text-sm">Resize + DL all</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <button onclick="compressSelected()" class="py-2 bg-emerald-600 rounded font-semibold text-sm">Compress &amp; Download</button>
+        <button onclick="addToPdfQueue()" class="py-2 bg-violet-600 rounded font-semibold text-sm">Add to PDF Queue</button>
+      </div>
+
+      <div class="flex gap-1 mb-2">
+        <button onclick="applyLocalFilter('grayscale')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Grayscale</button>
+        <button onclick="applyLocalFilter('sepia')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Sepia</button>
+        <button onclick="applyLocalFilter('blur')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Blur</button>
+      </div>
+
+      <button onclick="generateLocalPDF()" class="w-full py-3 bg-rose-600 rounded-2xl font-semibold mb-1">Generate PDF from Queue (local)</button>
+      <div class="flex gap-2">
+        <button onclick="clearImageQueue()" class="flex-1 py-2 text-xs bg-white/5 rounded">Clear</button>
+        <button onclick="requestImageTool()" class="flex-1 py-2 text-xs border border-white/20 rounded">Send to Bot</button>
+      </div>
+      <div class="text-center text-[10px] text-emerald-400 mt-1">100% in browser. No upload.</div>
+    </div>
+
+    <!-- QR -->
+    <div class="section-card glass rounded-3xl p-5 mb-4">
+      <div class="flex items-center gap-3 mb-3"><div class="tool-icon bg-amber-500/10"><i class="fa-solid fa-qrcode text-3xl text-amber-400"></i></div><div class="font-semibold">QR Code</div></div>
+      <input id="qr-text" type="text" placeholder="Text or link" class="w-full bg-slate-900 border border-white/10 px-4 py-3 rounded-2xl mb-2 text-sm">
+      <button onclick="generateQR()" class="w-full py-3 bg-amber-600 rounded-2xl font-semibold">Generate &amp; Download QR</button>
+      <div id="qr-result" class="mt-2 flex justify-center"></div>
+    </div>
+
+    <div class="text-center text-xs text-slate-500 mb-8">Full features work as a normal website. Bot still works separately (stickers only via bot).</div>
+  </div>
+
+  <script>
+    let tg = null;
+    function initTelegramWebApp() { /* non blocking */ }
+    function showSentFeedback(m) { console.log(m); }
+    function closeApp() { if (tg && tg.close) tg.close(); else window.close(); }
+
+    function generateQR() {
+      const text = document.getElementById('qr-text').value.trim();
+      if (!text) return alert('Enter text');
+      const container = document.getElementById('qr-result');
+      container.innerHTML = '';
+      new QRCode(container, {text: text, width: 180, height: 180, colorDark: '#0f172a', colorLight: '#fff', correctLevel: 1});
+      const dl = document.createElement('button');
+      dl.className = 'mt-2 text-xs px-3 py-1 bg-amber-600 rounded';
+      dl.textContent = 'Download PNG';
+      dl.onclick = () => {
+        const c = container.querySelector('canvas');
+        if (c) { const a = document.createElement('a'); a.href = c.toDataURL(); a.download = 'qr.png'; a.click(); }
+      };
+      container.appendChild(dl);
+    }
+
+    let selectedImages = [];
+    const localInput = document.getElementById('local-img');
+    if (localInput) {
+      localInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        const thumbs = document.getElementById('image-thumbs');
+        document.getElementById('image-list').classList.remove('hidden');
+        for (const file of files) {
+          const r = new FileReader();
+          await new Promise(res => {
+            r.onload = ev => {
+              const img = new Image();
+              img.onload = () => {
+                const id = 'img_' + Date.now();
+                selectedImages.push({id, name: file.name, img});
+                const t = document.createElement('div');
+                t.className = 'relative w-14 h-14 border border-white/10 rounded overflow-hidden';
+                t.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover"><button class="absolute top-0 right-0 bg-red-600 text-[9px] px-1">×</button>`;
+                t.querySelector('button').onclick = () => { selectedImages = selectedImages.filter(x=>x.id!==id); t.remove(); };
+                thumbs.appendChild(t);
+                res();
+              };
+              img.src = ev.target.result;
+            };
+            r.readAsDataURL(file);
+          });
+        }
+        document.getElementById('local-preview').innerHTML = selectedImages.length + ' images loaded (local only)';
+        localInput.value = '';
+      });
+    }
+
+    function getSelectedImgs() { return selectedImages.map(x => x.img); }
+
+    function processSingleImage(img, opts = {}) {
+      const c = document.createElement('canvas');
+      const ctx = c.getContext('2d');
+      let w = opts.width || img.width;
+      let h = opts.height || img.height;
+      if (opts.keepAspect) {
+        const sc = Math.min(w / img.width, h / img.height);
+        w = Math.round(img.width * sc); h = Math.round(img.height * sc);
+      }
+      c.width = w; c.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
+
+      if (opts.filter === 'grayscale') {
+        const d = ctx.getImageData(0,0,w,h).data;
+        for (let i=0;i<d.length;i+=4) { const g=(d[i]+d[i+1]+d[i+2])/3; d[i]=d[i+1]=d[i+2]=g; }
+        ctx.putImageData(ctx.getImageData(0,0,w,h),0,0);
+      } else if (opts.filter === 'sepia') {
+        const id = ctx.getImageData(0,0,w,h); const d=id.data;
+        for(let i=0;i<d.length;i+=4){ const r=d[i],g=d[i+1],b=d[i+2]; d[i]=Math.min(255,r*.393+g*.769+b*.189); d[i+1]=Math.min(255,r*.349+g*.686+b*.168); d[i+2]=Math.min(255,r*.272+g*.534+b*.131); }
+        ctx.putImageData(id,0,0);
+      }
+      const mime = opts.compress ? 'image/jpeg' : 'image/png';
+      return c.toDataURL(mime, opts.quality || 0.85);
+    }
+
+    function downloadDataUrl(u, name){ const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+
+    function applyLocalResize(all=false) {
+      const imgs = getSelectedImgs(); if(!imgs.length) return alert('Pick images');
+      const w = +document.getElementById('resize-w').value || 1280;
+      const h = +document.getElementById('resize-h').value || 720;
+      const keep = document.getElementById('keep-aspect').checked;
+      imgs.forEach((im,i) => {
+        const data = processSingleImage(im, {width:w, height:h, keepAspect:keep, compress:true});
+        if (all || i===0) downloadDataUrl(data, `resized_${i+1}.jpg`);
+      });
+    }
+
+    function compressSelected() {
+      getSelectedImgs().forEach((im,i) => downloadDataUrl( processSingleImage(im,{compress:true,quality:0.82}), `compressed_${i}.jpg` ));
+    }
+
+    function applyLocalFilter(f) {
+      getSelectedImgs().forEach((im,i) => downloadDataUrl( processSingleImage(im,{filter:f,compress:true}), `${f}_${i}.jpg`));
+    }
+
+    let pdfQueue = [];
+    function addToPdfQueue() { pdfQueue.push(...getSelectedImgs()); alert('Added to PDF queue'); }
+
+    function generateLocalPDF() {
+      const imgs = pdfQueue.length ? pdfQueue : getSelectedImgs();
+      if (!imgs.length) return alert('Add images first');
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF();
+      imgs.forEach((img, idx) => {
+        if (idx > 0) doc.addPage();
+        const c = document.createElement('canvas'); c.width=img.width; c.height=img.height;
+        c.getContext('2d').drawImage(img,0,0);
+        doc.addImage(c.toDataURL('image/jpeg',0.9), 'JPEG', 15, 15, 180, 180 * (img.height/img.width));
+      });
+      doc.save('images.pdf');
+    }
+
+    function clearImageQueue() { pdfQueue=[]; selectedImages=[]; document.getElementById('image-thumbs').innerHTML=''; document.getElementById('image-list').classList.add('hidden'); }
+
+    async function analyzeVideo() {
+      const u = document.getElementById('video-url').value.trim();
+      if(!u) return;
+      const box = document.getElementById('video-results');
+      const fmtBox = document.getElementById('video-formats');
+      box.classList.remove('hidden');
+      fmtBox.innerHTML = 'Loading qualities...';
+      try {
+        const r = await fetch('/video-info?url=' + encodeURIComponent(u));
+        const d = await r.json();
+        fmtBox.innerHTML = '';
+        if (d.best_direct_url) {
+          const b = document.createElement('button');
+          b.textContent = '★ BEST - Download direct';
+          b.className = 'block w-full mb-1 py-2 bg-emerald-700 rounded';
+          b.onclick = () => triggerDirectDownload(d.best_direct_url, (d.title||'video')+'.mp4');
+          fmtBox.appendChild(b);
+        }
+        (d.formats||[]).slice(0,6).forEach(f => {
+          const btn = document.createElement('button');
+          btn.className = 'block w-full text-left text-xs py-1 px-2 bg-white/5 rounded mb-0.5';
+          btn.textContent = (f.height||'?') + 'p ' + (f.size||'');
+          btn.onclick = () => f.url && triggerDirectDownload(f.url, 'video.mp4');
+          fmtBox.appendChild(btn);
+        });
+      } catch(e){ fmtBox.innerHTML = 'Analysis failed. Try bot.'; }
+    }
+
+    function triggerDirectDownload(url, name) {
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      const n = document.createElement('div'); n.className='text-emerald-400 text-xs mt-1'; n.textContent='Download started to your device storage.';
+      document.getElementById('video-formats').appendChild(n);
+      setTimeout(()=>n.remove(), 3000);
+    }
+
+    function requestVideoDownload() { /* fallback to bot */ alert('Use the Analyze button above for direct download. Bot path still available.'); }
+
+    function shortenUrl() {
+      const url = document.getElementById('long-url').value.trim();
+      if (!url) return;
+      fetch(`/shorten?url=${encodeURIComponent(url)}`).then(r=>r.json()).then(d=>{
+        if(d.short_link){
+          const el = document.createElement('div');
+          el.className='mt-2 p-2 bg-emerald-900/30 rounded text-xs';
+          el.innerHTML = '✅ <a href="'+d.short_link+'" target="_blank">'+d.short_link+'</a>';
+          document.getElementById('long-url').parentElement.appendChild(el);
+        }
+      });
+    }
+
+    function requestImageTool() { alert('Image tools now fully work above in the page (local).'); }
+
+    function boot() { /* ready */ console.log('%c[MiniApp] Full local image + direct video ready', 'color:#22c55e'); }
+    window.onload = boot;
+  </script>
+</body>
+</html>
