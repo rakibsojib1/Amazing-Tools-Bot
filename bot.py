@@ -1293,7 +1293,7 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not msg:
         return
 
-    # ── Photo handling: offer professional image tools + sticker option ──
+    # ── Photo handling: offer professional image tools + sticker option ─
     if msg.photo:
         # Store recent photos for PDF / tools
         if "photo_list" not in context.user_data:
@@ -1391,14 +1391,14 @@ async def auto_detect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await update.message.reply_text("❌ Invalid. Use e.g. 800 600 or 800 600 80 for resize+compress")
             return
 
-    # ── Video link → download flow ───────────────────────
+    # ── Video link → download flow ────────────────────────────────────
     if msg.text and VIDEO_LINK_PATTERN.search(msg.text):
         url = VIDEO_LINK_PATTERN.search(msg.text).group(0)
         await handle_video_link(update, context, url)
         return
 
 
-# ── Video download logic ─────────────────────────────────────
+# ── Video download logic ─────────────────────────────────────────────────
 
 async def handle_video_link(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str) -> None:
     user = update.effective_user
