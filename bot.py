@@ -125,13 +125,11 @@ def get_usage_db() -> sqlite3.Connection:
             stickers INTEGER DEFAULT 0,
             PRIMARY KEY (user_id, date)
         """)
-    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS config (
             key TEXT PRIMARY KEY,
             value TEXT
         """)
-    )
     db.execute(
         """CREATE TABLE IF NOT EXISTS short_urls (
             short_code TEXT PRIMARY KEY,
@@ -140,7 +138,6 @@ def get_usage_db() -> sqlite3.Connection:
             created_at TEXT,
             clicks INTEGER DEFAULT 0
         """)
-    )
     return db
 
 
