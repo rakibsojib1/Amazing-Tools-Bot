@@ -9,144 +9,307 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space-Grotesk:wght@500;600&amp;display=swap');
-    :root { --tg-theme-bg-color: #0f172a; --tg-theme-text-color: #f1f5f9; }
-    body { font-family: 'Inter', system_ui, sans-serif; }
-    .font-display { font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif; }
-    .glass { background: rgba(255,255,255, 0.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255, 0.08); }
-    .section-card { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1); }
-    .section-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
-    .tg-button { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); transition: all 0.2s ease; }
-    .tg-button:active { transform: scale(0.985); }
-    .tool-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 16px; }
-    .mini-header { background: linear-gradient(90deg, #0f172a, #1e2937); }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .font-display {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+    }
+
+    .glass {
+      background: rgba(255,255,255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255, 0.08);
+    }
+
+    .section-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .tool-icon {
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen pb-8">
-  <div class="mini-header sticky top-0 z-50 px-5 pt-4 pb-4 border-b border-white/10">
-    <div class="max-w-md mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-x-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-inner">
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+  <!-- Professional Header - No close button -->
+  <header class="bg-slate-900/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-x-4">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg">
           <i class="fa-solid fa-magic text-white text-2xl"></i>
         </div>
         <div>
-          <div class="font-display text-2xl font-semibold tracking-tighter">Amazing Tools</div>
-          <div class="text-[10px] text-slate-400 -mt-1">by Rakib Sojib</div>
+          <div class="font-display text-3xl font-semibold tracking-tighter">Amazing Tools</div>
+          <div class="text-xs text-slate-400 -mt-1">by Rakib Sojib • Professional toolkit</div>
         </div>
       </div>
-      <div class="flex items-center gap-x-2">
-        <div onclick="closeApp()" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white active:bg-white/10 rounded-2xl transition-colors">
-          <i class="fa-solid fa-times text-xl"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="max-w-md mx-auto px-5 pt-6">
-    <div class="mb-6">
-      <div id="user-greeting" class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-slate-800 rounded-2xl overflow-hidden border border-white/10">
-          <img id="user-avatar" class="w-full h-full object-cover" src="https://api.dicebear.com/7.x/thumbs/svg?seed=amazing" alt="">
-        </div>
-        <div>
-          <div id="greeting-text" class="text-lg font-semibold">Hi there!</div>
-          <div class="text-xs text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> <span>Online • Full local mode</span></div>
+      
+      <div class="hidden md:flex items-center gap-x-2 text-sm">
+        <div class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-check"></i>
+          <span>Works on all devices</span>
         </div>
       </div>
     </div>
+  </header>
 
-    <!-- VIDEO (FULL STANDALONE + DIRECT) -->
-    <div class="section-card glass rounded-3xl p-5 mb-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="tool-icon bg-sky-500/10"><i class="fa-solid fa-download text-3xl text-sky-400"></i></div>
-        <div><div class="font-semibold text-xl tracking-tight">Video Downloader</div><div class="text-xs text-slate-400">Best quality • Direct to phone storage</div></div>
+  <div class="max-w-7xl mx-auto px-5 md:px-8 pt-8 pb-16">
+    
+    <!-- Professional Hero -->
+    <div class="mb-10 text-center md:text-left">
+      <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium tracking-wider mb-4">
+        <span class="text-emerald-400">●</span> 
+        <span>FULLY FUNCTIONAL ON WEB • PC • PHONE</span>
       </div>
-      <div class="mb-3">
-        <input id="video-url" type="text" placeholder="https://youtube.com/... or tiktok link" class="w-full bg-slate-900 border border-white/10 focus:border-sky-500 placeholder:text-slate-500 text-sm px-4 py-3.5 rounded-2xl outline-none">
+      
+      <h1 class="font-display text-4xl md:text-5xl font-semibold tracking-tighter mb-3">
+        Powerful tools.<br class="hidden md:block"> 
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Beautifully simple.</span>
+      </h1>
+      <p class="max-w-2xl text-slate-400 text-lg">Everything you need — video downloads, image editing, QR codes, and URL tools — works perfectly on any screen size.</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="glass rounded-3xl px-6 py-5">
+        <div class="text-xs text-slate-400 mb-1">Daily Free Uses</div>
+        <div class="flex items-baseline gap-2">
+          <div class="font-display text-4xl font-semibold text-emerald-400">5</div>
+          <div class="text-emerald-400/70 text-sm">per tool</div>
+        </div>
       </div>
-      <div class="flex gap-2 mb-3">
-        <button onclick="analyzeVideo()" class="flex-1 py-3 rounded-2xl font-semibold bg-sky-600 hover:bg-sky-700 text-sm">Show Best Qualities</button>
-        <button onclick="requestVideoDownload()" class="px-4 py-3 rounded-2xl text-sm border border-white/20">Send to Bot</button>
+      <div class="glass rounded-3xl px-6 py-5">
+        <div class="text-xs text-slate-400 mb-1">Video Downloads</div>
+        <div class="flex items-baseline gap-2">
+          <div class="font-display text-4xl font-semibold text-sky-400">5★</div>
+          <div class="text-sky-400/70 text-sm">each</div>
+        </div>
       </div>
-      <div id="video-results" class="hidden mt-3 p-3 bg-slate-900/60 rounded-2xl text-sm">
-        <div class="text-xs text-slate-400 mb-2 font-medium">Click a quality to download directly:</div>
-        <div id="video-formats" class="space-y-1.5"></div>
+      <div class="glass rounded-3xl px-6 py-5">
+        <div class="text-xs text-slate-400 mb-1">Sticker Packs</div>
+        <div class="flex items-baseline gap-2">
+          <div class="font-display text-4xl font-semibold text-violet-400">10★</div>
+          <div class="text-violet-400/70 text-sm">each</div>
+        </div>
+      </div>
+      <div class="glass rounded-3xl px-6 py-5 hidden md:block">
+        <div class="text-xs text-slate-400 mb-1">Everything</div>
+        <div class="font-display text-3xl font-semibold">100% Local</div>
+        <div class="text-xs text-emerald-400">No data leaves your device</div>
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="section-card glass rounded-3xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="tool-icon bg-sky-500/10 shrink-0">
+          <i class="fa-solid fa-download text-3xl text-sky-400"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-2xl tracking-tight">Video Downloader</div>
+          <div class="text-sm text-slate-400 mt-0.5">Download in best available quality directly to your device. Works perfectly on phone, tablet &amp; desktop.</div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-8">
+          <label class="block text-xs font-medium text-slate-400 mb-2 tracking-widest">VIDEO URL</label>
+          <input id="video-url" type="text" placeholder="https://youtube.com/watch?v=... or TikTok / Instagram link" class="w-full bg-slate-900 border border-white/10 focus:border-sky-500 placeholder:text-slate-500 text-base px-5 py-4 rounded-2xl outline-none transition-all">
+        </div>
+        
+        <div class="lg:col-span-4 flex flex-col gap-2 lg:pt-6">
+          <button onclick="analyzeVideo()" class="w-full py-4 rounded-2xl font-semibold bg-sky-600 hover:bg-sky-700 active:scale-[0.985] transition flex items-center justify-center gap-2 text-base">
+            <i class="fa-solid fa-search"></i>
+            <span>Analyze &amp; Show Qualities</span>
+          </button>
+          <button onclick="requestVideoDownload()" class="w-full py-3 text-sm border border-white/15 hover:bg-white/5 rounded-2xl transition">
+            Send request via Bot
+          </button>
+        </div>
+      </div>
+
+      <div id="video-results" class="hidden mt-6 p-5 bg-slate-900/70 border border-white/10 rounded-3xl">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="font-semibold text-lg">Available Qualities</div>
+            <div class="text-xs text-slate-400">Click any to download directly</div>
+          </div>
+          <div class="text-[10px] px-3 py-1 bg-amber-400/10 text-amber-300 rounded-full">Direct • Fast</div>
+        </div>
+        <div id="video-formats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </div>
     </div>
 
     <!-- URL SHORTENER -->
-    <div class="section-card glass rounded-3xl p-5 mb-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="tool-icon bg-emerald-500/10"><i class="fa-solid fa-link text-3xl text-emerald-400"></i></div>
-        <div><div class="font-semibold text-xl tracking-tight">URL Shortener</div></div>
+    <div class="section-card glass rounded-3xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="tool-icon bg-emerald-500/10 shrink-0">
+          <i class="fa-solid fa-link text-3xl text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-2xl tracking-tight">URL Shortener</div>
+          <div class="text-sm text-slate-400">Free • Custom codes • Real-time click tracking</div>
+        </div>
       </div>
-      <input id="long-url" type="text" placeholder="https://very-long-link.com/..." class="w-full bg-slate-900 border border-white/10 text-sm px-4 py-3.5 rounded-2xl mb-2">
-      <button onclick="shortenUrl()" class="w-full py-3 rounded-2xl bg-emerald-600 font-semibold">Create Short Link (direct)</button>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-2 tracking-widest">LONG URL</label>
+          <input id="long-url" type="text" placeholder="https://example.com/very/long/path?with=parameters" class="w-full bg-slate-900 border border-white/10 focus:border-emerald-500 text-base px-5 py-4 rounded-2xl outline-none transition-all">
+        </div>
+        
+        <button onclick="shortenUrl()" class="w-full py-4 rounded-2xl font-semibold bg-emerald-600 hover:bg-emerald-700 active:scale-[0.985] transition flex items-center justify-center gap-2 text-base">
+          <i class="fa-solid fa-compress-arrows-alt"></i>
+          <span>Create Short Link</span>
+        </button>
+      </div>
     </div>
 
-    <!-- IMAGE TOOLS - 100% LOCAL + MULTI + CUSTOM -->
-    <div class="section-card glass rounded-3xl p-5 mb-4">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="tool-icon bg-sky-500/10"><i class="fa-solid fa-image text-3xl text-sky-400"></i></div>
-        <div><div class="font-semibold text-xl tracking-tight">Image Tools (Full Local)</div><div class="text-xs text-slate-400">Multi photos • Custom W×H • PDF • Filters</div></div>
-      </div>
-
-      <input type="file" id="local-img" accept="image/*" multiple class="w-full text-sm mb-2">
-      <div id="local-preview" class="text-xs text-emerald-400 mb-2"></div>
-
-      <div id="image-list" class="mb-3 hidden">
-        <div class="text-xs mb-1">Selected:</div>
-        <div id="image-thumbs" class="flex flex-wrap gap-2"></div>
-      </div>
-
-      <div class="mb-3 p-3 bg-slate-900/70 rounded-2xl">
-        <div class="text-xs font-medium mb-1">Custom Resize</div>
-        <div class="grid grid-cols-2 gap-2">
-          <input id="resize-w" type="number" value="1280" class="bg-slate-950 border border-white/10 rounded px-3 py-1.5 text-sm" placeholder="Width">
-          <input id="resize-h" type="number" value="720" class="bg-slate-950 border border-white/10 rounded px-3 py-1.5 text-sm" placeholder="Height">
+    <!-- IMAGE TOOLS -->
+    <div class="section-card glass rounded-3xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="tool-icon bg-sky-500/10 shrink-0">
+          <i class="fa-solid fa-image text-3xl text-sky-400"></i>
         </div>
-        <label class="text-xs mt-1 block"><input type="checkbox" id="keep-aspect" checked> keep aspect</label>
-        <div class="flex gap-2 mt-2">
-          <button onclick="applyLocalResize()" class="flex-1 py-2 bg-sky-700 rounded text-sm">Resize</button>
-          <button onclick="applyLocalResize(true)" class="flex-1 py-2 bg-sky-800 rounded text-sm">Resize + DL all</button>
+        <div class="flex-1">
+          <div class="font-semibold text-2xl tracking-tight">Image Tools</div>
+          <div class="text-sm text-slate-400">100% local processing • Works beautifully on every screen</div>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2 mb-2">
-        <button onclick="compressSelected()" class="py-2 bg-emerald-600 rounded font-semibold text-sm">Compress &amp; Download</button>
-        <button onclick="addToPdfQueue()" class="py-2 bg-violet-600 rounded font-semibold text-sm">Add to PDF Queue</button>
+      <div class="mb-5">
+        <label class="block text-xs font-semibold tracking-widest text-slate-400 mb-2">UPLOAD PHOTOS</label>
+        <input type="file" id="local-img" accept="image/*" multiple class="w-full text-sm file:mr-4 file:py-2.5 file:px-5 file:rounded-2xl file:border-0 file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 bg-slate-900 border border-white/10 rounded-2xl p-1">
+        <div id="local-preview" class="mt-2 text-xs text-emerald-400"></div>
       </div>
 
-      <div class="flex gap-1 mb-2">
-        <button onclick="applyLocalFilter('grayscale')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Grayscale</button>
-        <button onclick="applyLocalFilter('sepia')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Sepia</button>
-        <button onclick="applyLocalFilter('blur')" class="flex-1 py-1.5 text-xs bg-white/5 rounded">Blur</button>
+      <div id="image-list" class="mb-5 hidden">
+        <div class="text-xs font-medium text-slate-400 mb-2">SELECTED IMAGES</div>
+        <div id="image-thumbs" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3"></div>
       </div>
 
-      <button onclick="generateLocalPDF()" class="w-full py-3 bg-rose-600 rounded-2xl font-semibold mb-1">Generate PDF from Queue (local)</button>
-      <div class="flex gap-2">
-        <button onclick="clearImageQueue()" class="flex-1 py-2 text-xs bg-white/5 rounded">Clear</button>
-        <button onclick="requestImageTool()" class="flex-1 py-2 text-xs border border-white/20 rounded">Send to Bot</button>
+      <div class="bg-slate-900/70 border border-white/10 rounded-3xl p-5 space-y-5">
+        <div>
+          <div class="text-xs font-semibold tracking-widest text-slate-300 mb-2.5">CUSTOM RESIZE</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] text-slate-400 mb-1">WIDTH</div>
+              <input id="resize-w" type="number" value="1280" class="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-lg focus:border-sky-500 outline-none">
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 mb-1">HEIGHT</div>
+              <input id="resize-h" type="number" value="720" class="w-full bg-black border border-white/10 rounded-2xl px-4 py-3 text-lg focus:border-sky-500 outline-none">
+            </div>
+          </div>
+          <label class="inline-flex items-center gap-2 mt-3 text-sm cursor-pointer">
+            <input type="checkbox" id="keep-aspect" checked class="accent-sky-500"> 
+            <span class="text-slate-400">Keep aspect ratio</span>
+          </label>
+          
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button onclick="applyLocalResize()" class="flex-1 py-3 text-sm bg-sky-700 hover:bg-sky-600 rounded-2xl font-medium">Resize Selected</button>
+            <button onclick="applyLocalResize(true)" class="flex-1 py-3 text-sm bg-sky-800 hover:bg-sky-700 rounded-2xl font-medium">Resize + Download All</button>
+          </div>
+        </div>
+
+        <div class="border-t border-white/10 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="compressSelected()" class="py-3.5 rounded-2xl font-semibold bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-compress"></i> <span>Compress &amp; Download</span>
+          </button>
+          <button onclick="addToPdfQueue()" class="py-3.5 rounded-2xl font-semibold bg-violet-600 hover:bg-violet-700 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-pdf"></i> <span>Add to PDF Queue</span>
+          </button>
+        </div>
+
+        <div>
+          <button onclick="generateLocalPDF()" class="w-full py-4 rounded-2xl font-semibold bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center gap-2 text-base">
+            <i class="fa-solid fa-file-pdf text-lg"></i>
+            <span>Generate PDF from Queue</span>
+          </button>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button onclick="clearImageQueue()" class="flex-1 py-2.5 text-xs border border-white/15 hover:bg-white/5 rounded-2xl">Clear All</button>
+          <button onclick="requestImageTool()" class="flex-1 py-2.5 text-xs border border-white/15 hover:bg-white/5 rounded-2xl">Use via Bot instead</button>
+        </div>
+        
+        <div class="text-center text-xs text-emerald-400 pt-1">All processing happens in your browser. Nothing is uploaded.</div>
       </div>
-      <div class="text-center text-[10px] text-emerald-400 mt-1">100% in browser. No upload.</div>
     </div>
 
     <!-- QR -->
-    <div class="section-card glass rounded-3xl p-5 mb-4">
-      <div class="flex items-center gap-3 mb-3"><div class="tool-icon bg-amber-500/10"><i class="fa-solid fa-qrcode text-3xl text-amber-400"></i></div><div class="font-semibold">QR Code</div></div>
-      <input id="qr-text" type="text" placeholder="Text or link" class="w-full bg-slate-900 border border-white/10 px-4 py-3 rounded-2xl mb-2 text-sm">
-      <button onclick="generateQR()" class="w-full py-3 bg-amber-600 rounded-2xl font-semibold">Generate &amp; Download QR</button>
-      <div id="qr-result" class="mt-2 flex justify-center"></div>
+    <div class="section-card glass rounded-3xl p-6 mb-6">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="tool-icon bg-amber-500/10 shrink-0">
+          <i class="fa-solid fa-qrcode text-3xl text-amber-400"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-2xl tracking-tight">QR Code Generator</div>
+          <div class="text-sm text-slate-400">Instant • Beautiful • Works offline</div>
+        </div>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-2 tracking-widest">TEXT OR URL</label>
+          <input id="qr-text" type="text" placeholder="https://t.me/yourbot or any text / WiFi info" class="w-full bg-slate-900 border border-white/10 focus:border-amber-500 text-base px-5 py-4 rounded-2xl outline-none transition-all">
+        </div>
+        
+        <button onclick="generateQR()" class="w-full py-4 rounded-2xl font-semibold bg-amber-600 hover:bg-amber-700 active:scale-[0.985] transition flex items-center justify-center gap-2 text-base">
+          <i class="fa-solid fa-qrcode"></i>
+          <span>Generate &amp; Download QR</span>
+        </button>
+      </div>
+      
+      <div id="qr-result" class="mt-5 flex justify-center"></div>
     </div>
 
-    <div class="text-center text-xs text-slate-500 mb-8">Full features work as a normal website. Bot still works separately (stickers only via bot).</div>
+    <!-- STICKER (Bot-only) -->
+    <div class="section-card glass rounded-3xl p-5 mb-6 opacity-75">
+      <div class="flex items-center gap-4">
+        <div class="tool-icon bg-violet-500/10">
+          <i class="fa-solid fa-images text-3xl text-violet-400"></i>
+        </div>
+        <div class="flex-1">
+          <div class="font-semibold">Sticker Pack Creator</div>
+          <div class="text-xs text-slate-400">Available only via Telegram bot chat</div>
+        </div>
+        <button onclick="requestStickerFlow()" class="px-4 py-2 text-xs border border-white/20 hover:bg-white/5 rounded-2xl">
+          Open in Bot
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400 pt-4 border-t border-white/10">
+      <div>Made with ❤️ by <span class="text-slate-300">Rakib Sojib</span></div>
+      <div class="flex items-center gap-4">
+        <div onclick="window.open('https://t.me/roki1277', '_blank')" class="cursor-pointer hover:text-slate-200">@roki1277</div>
+        <div class="hidden md:block">•</div>
+        <div>Works fully as a website • No account needed</div>
+      </div>
+    </div>
   </div>
 
   <script>
-    let tg = null;
-    function initTelegramWebApp() { /* non blocking */ }
+    // Tailwind + core functions (preserved from original)
+    function initTelegramWebApp() { /* non blocking for standalone */ }
     function showSentFeedback(m) { console.log(m); }
-    function closeApp() { if (tg && tg.close) tg.close(); else window.close(); }
+    function closeApp() { window.close(); }
 
     function generateQR() {
       const text = document.getElementById('qr-text').value.trim();
@@ -299,7 +462,7 @@
       setTimeout(()=>n.remove(), 3000);
     }
 
-    function requestVideoDownload() { /* fallback to bot */ alert('Use the Analyze button above for direct download. Bot path still available.'); }
+    function requestVideoDownload() { alert('Use the Analyze button above for direct download.'); }
 
     function shortenUrl() {
       const url = document.getElementById('long-url').value.trim();
@@ -316,7 +479,7 @@
 
     function requestImageTool() { alert('Image tools now fully work above in the page (local).'); }
 
-    function boot() { /* ready */ console.log('%c[MiniApp] Full local image + direct video ready', 'color:#22c55e'); }
+    function boot() { console.log('%c[Amazing Tools] Professional UI ready', 'color:#64748b'); }
     window.onload = boot;
   </script>
 </body>
